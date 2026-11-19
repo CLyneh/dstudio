@@ -1,0 +1,31 @@
+/* Design tokens. Every color in the UI comes from here.
+   The tool is deliberately dark-only: like every video editor, the preview must be judged on a dark surround. */
+:root {
+  --ink-0: #0f1116; /* app background */
+  --ink-1: #161922; /* panels */
+  --ink-2: #1e222d; /* raised controls */
+  --ink-3: #272c39; /* hover / selected */
+  --line: #2b303d;
+  --fg: #eceef4;
+  --muted: #959cae;
+  --dim: #6b7285;
+  --accent: #f2c14e; /* "tally light" yellow: actions and selection */
+  --accent-ink: #1d1604;
+  --accent-soft: rgba(242, 193, 78, 0.14);
+  --ok: #5fd39b;
+  --danger: #ff5d62;
+  --info: #7fb2ff;
+  --stage: #07080b;
+
+  --f-display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
+  --f-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --gutter: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+
+  color-scheme: dark;
+}

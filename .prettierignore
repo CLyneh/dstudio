@@ -1,0 +1,10 @@
+dist
+node_modules
+public/ffmpeg
+docs/reference
+docs/maquette
+package-lock.json
+playwright-report
+test-results
+e2e/__screenshots__
+scripts/mockup/maquette.template.html

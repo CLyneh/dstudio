@@ -1,0 +1,29 @@
+[
+  {
+    "id": "youtube",
+    "name": "YouTube",
+    "description": "16:9, texte comme tapé",
+    "format": "16:9",
+    "textCase": "normal",
+    "veil": 0,
+    "vignette": false
+  },
+  {
+    "id": "reels",
+    "name": "Reels / TikTok",
+    "description": "9:16, majuscules",
+    "format": "9:16",
+    "textCase": "upper",
+    "veil": 0,
+    "vignette": false
+  },
+  {
+    "id": "fond-charge",
+    "name": "Sur une vidéo chargée",
+    "description": "16:9, voile noir + vignettage pour la lisibilité",
+    "format": "16:9",
+    "textCase": "normal",
+    "veil": 0.35,
+    "vignette": true
+  }
+]

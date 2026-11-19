@@ -1,0 +1,3175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motion Studio — Titres, Chapitres & Synthés</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Space+Grotesk:wght@600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #07080c;
+      color: #f3f4f6;
+    }
+
+    /* Barres de défilement fines */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0d14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #24293a;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38405a;
+    }
+
+    /* Grille de fond du studio */
+    .workspace-grid {
+      background-color: #07080c;
+      background-image: radial-gradient(#1a1e2c 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    /* Damier de transparence affiché sous le canvas */
+    .alpha-checkerboard {
+      background-color: #141722;
+      background-image:
+        linear-gradient(45deg, #212636 25%, transparent 25%),
+        linear-gradient(-45deg, #212636 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #212636 75%),
+        linear-gradient(-45deg, transparent 75%, #212636 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row overflow-x-hidden select-none">
+
+  <!-- Bannière d'erreur de secours (cachée si tout fonctionne) -->
+  <div id="fatalErrorBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[92%] bg-red-950/95 border border-red-500 text-red-100 px-4 py-3 rounded-xl shadow-2xl text-xs">
+    <strong class="font-bold block mb-1">Erreur d'initialisation du studio :</strong>
+    <span id="fatalErrorText" class="font-mono break-all"></span>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- BARRE LATÉRALE GAUCHE (395px sur Desktop)                             -->
+  <!-- ===================================================================== -->
+  <aside class="w-full lg:w-[395px] bg-[#0d1017] border-b lg:border-b-0 lg:border-r border-slate-800/80 flex flex-col shrink-0 z-20">
+
+    <!-- En-tête -->
+    <div class="px-4 py-3 border-b border-slate-800/80 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg shadow-pink-600/25">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-sm tracking-tight text-white">Motion Studio</h1>
+          <p class="text-[10px] text-slate-400">Titres, Chapitres & Synthés • 60 FPS</p>
+        </div>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30">
+        HD Alpha
+      </span>
+    </div>
+
+    <!-- NAVIGATION À 3 ONGLETS PRINCIPAUX -->
+    <div class="p-2 bg-[#090b10] border-b border-slate-800/80">
+      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#131722] border border-slate-800/90" role="tablist">
+        <button id="tabBtnIntro" type="button" role="tab" aria-selected="true"
+          class="main-tab-btn py-2 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all bg-pink-600 text-white shadow-md shadow-pink-600/20 cursor-pointer">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>Titre & Intro</span>
+        </button>
+
+        <button id="tabBtnChapter" type="button" role="tab" aria-selected="false"
+          class="main-tab-btn py-2 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all text-slate-400 hover:text-white cursor-pointer">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+          </svg>
+          <span>Chapitres</span>
+        </button>
+
+        <button id="tabBtnLowerThird" type="button" role="tab" aria-selected="false"
+          class="main-tab-btn py-2 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all text-slate-400 hover:text-white cursor-pointer">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+          <span>Synthés</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENU DÉFILANT DES PANNEAUX -->
+    <div class="p-4 space-y-4 overflow-y-auto flex-1 lg:max-h-[calc(100vh-192px)]">
+
+      <!-- ================================================================= -->
+      <!-- ONGLET 1 : TITRE & INTRO                                          -->
+      <!-- ================================================================= -->
+      <section id="panelIntro" class="space-y-3.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-pink-400">
+            Titre Principal / Générique
+          </span>
+          <button id="btnResetIntro" type="button" class="text-[11px] text-slate-400 hover:text-pink-300 font-medium cursor-pointer">
+            Réinitialiser
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label for="introLine1Input" class="block text-[10px] text-slate-400 mb-1">Ligne 1 (Accroche)</label>
+            <input id="introLine1Input" type="text" value="Un mot,"
+              class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-pink-500" />
+          </div>
+          <div>
+            <label for="introLine2Input" class="block text-[10px] text-slate-400 mb-1">Ligne 2 (Réponse)</label>
+            <input id="introLine2Input" type="text" value="Deux réponses"
+              class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-pink-500" />
+          </div>
+        </div>
+
+        <!-- Badge supérieur optionnel -->
+        <div class="p-2.5 rounded-xl bg-[#080a0f] border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="toggleIntroBadge" class="text-xs font-semibold text-slate-200 cursor-pointer">
+              Badge supérieur éditorial
+            </label>
+            <input id="toggleIntroBadge" type="checkbox" checked class="w-4 h-4 accent-pink-600 rounded cursor-pointer" />
+          </div>
+          <input id="introBadgeInput" type="text" value="SIESTIFY • ENTRETIEN CROISÉ"
+            class="w-full rounded-lg bg-[#131722] border border-slate-700/80 px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-pink-500" />
+        </div>
+
+        <!-- 7 Animations Populaires Titre & Intro -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Animation d'ouverture (7 styles)</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" data-introanim="split-reveal"
+              class="intro-anim-btn p-2 rounded-xl border border-pink-500 bg-pink-500/10 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Split & Révélation</div>
+              <div class="text-[9px] text-slate-400">Ligne rose + ouverture</div>
+            </button>
+            <button type="button" data-introanim="word-pop"
+              class="intro-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Mot par Mot (Pop)</div>
+              <div class="text-[9px] text-slate-400">Rebond YouTube / Reels</div>
+            </button>
+            <button type="button" data-introanim="cinema-minimal"
+              class="intro-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Cinéma Minimal</div>
+              <div class="text-[9px] text-slate-400">Glissement masqué & zoom</div>
+            </button>
+            <button type="button" data-introanim="kinetic-impact"
+              class="intro-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Impact Typo</div>
+              <div class="text-[9px] text-slate-400">Cartouche & resserrage</div>
+            </button>
+            <button type="button" data-introanim="typewriter"
+              class="intro-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Machine à Écrire</div>
+              <div class="text-[9px] text-slate-400">Frappe + curseur rose</div>
+            </button>
+            <button type="button" data-introanim="blur-reveal"
+              class="intro-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Flou Cinétique</div>
+              <div class="text-[9px] text-slate-400">Défloutage fluide latéral</div>
+            </button>
+            <button type="button" data-introanim="editorial-card"
+              class="intro-anim-btn col-span-2 p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Carton Éditorial & Viseurs</div>
+              <div class="text-[9px] text-slate-400">Cadre géométrique avec repères d'angles</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Durée Intro -->
+        <div>
+          <div class="flex justify-between mb-1">
+            <label for="introDurationRange" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Durée du titre</label>
+            <span id="introDurationVal" class="text-xs font-bold text-pink-400">4.0s</span>
+          </div>
+          <div class="h-[34px] flex items-center px-3 bg-[#080a0f] rounded-xl border border-slate-800">
+            <input id="introDurationRange" type="range" min="2.0" max="6.0" step="0.5" value="4.0" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- ONGLET 2 : INTERTITRES & CHAPITRES                                -->
+      <!-- ================================================================= -->
+      <section id="panelChapter" class="hidden space-y-3.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-pink-400">
+            Intertitres & Chapitres
+          </span>
+          <label class="flex items-center gap-1.5 cursor-pointer bg-[#131722] px-2 py-1 rounded-lg border border-slate-700/70">
+            <input id="toggleChapterSequence" type="checkbox" class="w-3.5 h-3.5 accent-pink-500 rounded cursor-pointer" />
+            <span class="text-[10px] font-semibold text-slate-200">Séquence multiple</span>
+          </label>
+        </div>
+
+        <!-- Mode Carton Unique -->
+        <div id="chapterSingleBox" class="space-y-2.5">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Presets rapides (clic instantané)</label>
+            <div class="flex flex-wrap gap-1">
+              <button type="button" data-ch-top="CHAPITRE 01" data-ch-main="Manche 1" data-ch-sub=""
+                class="ch-preset-btn px-2 py-1 rounded-lg bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer">
+                Manche 1
+              </button>
+              <button type="button" data-ch-top="CHAPITRE 01" data-ch-main="Histoire 1" data-ch-sub=""
+                class="ch-preset-btn px-2 py-1 rounded-lg bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer">
+                Histoire 1
+              </button>
+              <button type="button" data-ch-top="ÉTAPE 01" data-ch-main="Premièrement" data-ch-sub=""
+                class="ch-preset-btn px-2 py-1 rounded-lg bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer">
+                Premièrement
+              </button>
+              <button type="button" data-ch-top="JEU • QUIZ" data-ch-main="Vrai ou Faux" data-ch-sub=""
+                class="ch-preset-btn px-2 py-1 rounded-lg bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer">
+                Vrai ou Faux
+              </button>
+              <button type="button" data-ch-top="MOT-CLÉ" data-ch-main="Entrepreneur." data-ch-sub=""
+                class="ch-preset-btn px-2 py-1 rounded-lg bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer">
+                Entrepreneur.
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label for="chTopInput" class="block text-[10px] text-slate-400 mb-1">Sur-titre</label>
+              <input id="chTopInput" type="text" value="CHAPITRE 01"
+                class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-2 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-pink-500"
+                placeholder="ÉTAPE 01" />
+            </div>
+            <div class="col-span-2">
+              <label for="chMainInput" class="block text-[10px] text-slate-400 mb-1">Mot / Phrase principale</label>
+              <input id="chMainInput" type="text" value="Manche 1"
+                class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-pink-500"
+                placeholder="Manche 1, Vrai ou Faux..." />
+            </div>
+          </div>
+
+          <div>
+            <label for="chSubInput" class="block text-[10px] text-slate-400 mb-1">Sous-texte optionnel</label>
+            <input id="chSubInput" type="text" value=""
+              class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-pink-500"
+              placeholder="Ex: Le face-à-face commence..." />
+          </div>
+        </div>
+
+        <!-- Mode Séquence Multiple -->
+        <div id="chapterSequenceBox" class="hidden space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="chSequenceInput" class="text-[10px] text-slate-400">
+              1 carton par ligne (<code class="text-pink-300">SUR-TITRE | MOT</code>)
+            </label>
+            <button id="btnLoadChapterSeqExample" type="button" class="text-[10px] text-pink-400 hover:text-pink-300 font-medium cursor-pointer">
+              Exemple
+            </button>
+          </div>
+          <textarea id="chSequenceInput" rows="4"
+            class="w-full rounded-xl bg-[#080a0f] border border-slate-700/80 px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-pink-500 leading-relaxed">CHAPITRE 01 | Manche 1
+CHAPITRE 02 | Vrai ou Faux
+CHAPITRE 03 | Premièrement</textarea>
+        </div>
+
+        <!-- 7 Animations Populaires Chapitres -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Animation de chapitre (7 styles)</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" data-chanim="slide-mask"
+              class="ch-anim-btn p-2 rounded-xl border border-pink-500 bg-pink-500/10 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Slide & Masque</div>
+              <div class="text-[9px] text-slate-400">Révélation nette + trait rose</div>
+            </button>
+            <button type="button" data-chanim="marker-highlight"
+              class="ch-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Surlignage Marqueur</div>
+              <div class="text-[9px] text-slate-400">Bande colorée façon Vox</div>
+            </button>
+            <button type="button" data-chanim="word-pop"
+              class="ch-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Mot par Mot (Reels)</div>
+              <div class="text-[9px] text-slate-400">Rebond dynamique rythmé</div>
+            </button>
+            <button type="button" data-chanim="zoom-impact"
+              class="ch-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Zoom Impact (Punch)</div>
+              <div class="text-[9px] text-slate-400">Apparition punchy & rebond</div>
+            </button>
+            <button type="button" data-chanim="glitch-flash"
+              class="ch-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Glitch & Flash</div>
+              <div class="text-[9px] text-slate-400">Décalage RVB moderne</div>
+            </button>
+            <button type="button" data-chanim="cinema-tracking"
+              class="ch-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Écartement Cinéma</div>
+              <div class="text-[9px] text-slate-400">Tracking lettres grand écran</div>
+            </button>
+            <button type="button" data-chanim="framed-box"
+              class="ch-anim-btn col-span-2 p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Carton Encadré</div>
+              <div class="text-[9px] text-slate-400">Cadre sombre élégant avec bordure rose</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Durée par carton -->
+        <div>
+          <div class="flex justify-between mb-1">
+            <label for="chDurationRange" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Durée par carton</label>
+            <span id="chDurationVal" class="text-xs font-bold text-pink-400">2.5s</span>
+          </div>
+          <div class="h-[34px] flex items-center px-3 bg-[#080a0f] rounded-xl border border-slate-800">
+            <input id="chDurationRange" type="range" min="1.5" max="5.0" step="0.5" value="2.5" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- ONGLET 3 : SYNTHÉ INTERVENANT (LOWER THIRDS)                      -->
+      <!-- ================================================================= -->
+      <section id="panelLowerThird" class="hidden space-y-3.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-pink-400">
+            Synthé Intervenant
+          </span>
+          <button id="btnAddSpeaker" type="button"
+            class="text-[10px] font-semibold text-pink-400 hover:text-pink-300 bg-pink-500/10 px-2 py-1 rounded-lg border border-pink-500/25 cursor-pointer">
+            + Ajouter un intervenant
+          </button>
+        </div>
+
+        <div id="speakersList" class="grid grid-cols-1 gap-1.5"></div>
+
+        <div class="p-2.5 rounded-xl bg-[#080a0f] border border-slate-800 space-y-2">
+          <div>
+            <label for="ltNameInput" class="block text-[10px] text-slate-400 mb-1">Nom & Prénom</label>
+            <input id="ltNameInput" type="text" value="Gildas OVONO MBA"
+              class="w-full rounded-lg bg-[#131722] border border-slate-700/80 px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-pink-500" />
+          </div>
+          <div>
+            <label for="ltRoleInput" class="block text-[10px] text-slate-400 mb-1">Titre / Fonction</label>
+            <input id="ltRoleInput" type="text" value="Co-founder & CEO Siestify"
+              class="w-full rounded-lg bg-[#131722] border border-slate-700/80 px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-pink-500" />
+          </div>
+        </div>
+
+        <!-- Alignement : Gauche, Centre, Droite (Droite par défaut) -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ancrage à l'écran</label>
+          <div class="grid grid-cols-3 gap-1 bg-[#080a0f] p-1 rounded-xl border border-slate-800">
+            <button type="button" data-ltpos="bottom-left"
+              class="lt-pos-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold transition text-slate-400 hover:text-white cursor-pointer">
+              Gauche
+            </button>
+            <button type="button" data-ltpos="bottom-center"
+              class="lt-pos-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold transition text-slate-400 hover:text-white cursor-pointer">
+              Centre
+            </button>
+            <button type="button" data-ltpos="bottom-right"
+              class="lt-pos-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold transition bg-pink-600 text-white shadow cursor-pointer">
+              Droite
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Styles de cartouche -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Style du cartouche</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" data-ltstyle="dark-glass"
+              class="lt-style-btn p-2 rounded-xl border border-pink-500 bg-pink-500/10 text-center transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Sombre Verre</div>
+            </button>
+            <button type="button" data-ltstyle="editorial-white"
+              class="lt-style-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-center transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Blanc Éditorial</div>
+            </button>
+            <button type="button" data-ltstyle="rose-signature"
+              class="lt-style-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-center transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Rose Signature</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Animations Synthés -->
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Animation du synthé (4 styles)</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" data-ltanim="drawer-slide"
+              class="lt-anim-btn p-2 rounded-xl border border-pink-500 bg-pink-500/10 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Tiroir Latéral Fluide</div>
+              <div class="text-[9px] text-slate-400">Barre + déploiement</div>
+            </button>
+            <button type="button" data-ltanim="curtain-mask"
+              class="lt-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Rideau Masqué</div>
+              <div class="text-[9px] text-slate-400">Ouverture verticale</div>
+            </button>
+            <button type="button" data-ltanim="line-expand"
+              class="lt-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Expansion Ligne</div>
+              <div class="text-[9px] text-slate-400">Tracé séparateur central</div>
+            </button>
+            <button type="button" data-ltanim="elastic-pop"
+              class="lt-anim-btn p-2 rounded-xl border border-slate-800 bg-[#080a0f] hover:border-slate-700 text-left transition cursor-pointer">
+              <div class="text-[11px] font-bold text-white">Pop Élastique</div>
+              <div class="text-[9px] text-slate-400">Rebond moderne dynamique</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Durée synthé -->
+        <div>
+          <div class="flex justify-between mb-1">
+            <label for="ltDurationRange" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Durée du synthé</label>
+            <span id="ltDurationVal" class="text-xs font-bold text-pink-400">4.5s</span>
+          </div>
+          <div class="h-[34px] flex items-center px-3 bg-[#080a0f] rounded-xl border border-slate-800">
+            <input id="ltDurationRange" type="range" min="3.0" max="8.0" step="0.5" value="4.5" class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- SECTIONS COMMUNES : TYPOGRAPHIE, FOND / VOILE NOIR, IMAGE, COULEURS-->
+      <!-- ================================================================= -->
+      <div class="pt-3.5 border-t border-slate-800/90 space-y-3">
+
+        <!-- SECTION 4 : TYPOGRAPHIE & CASSE DU TEXTE -->
+        <div class="p-3 rounded-2xl bg-[#090b10] border border-slate-800/90 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M12 6v12"></path>
+              </svg>
+              Police & Casse du Texte
+            </span>
+          </div>
+
+          <select id="globalFontSelect"
+            class="w-full h-[34px] rounded-xl bg-[#131722] border border-slate-700/80 px-2.5 text-xs font-semibold text-white focus:outline-none focus:border-pink-500">
+            <option value="Inter">Inter (Moderne Sans)</option>
+            <option value="Montserrat">Montserrat (Géométrique Bold)</option>
+            <option value="Playfair Display">Playfair Display (Éditorial Serif)</option>
+            <option value="Space Grotesk">Space Grotesk (Tech & Studio)</option>
+            <option value="Bebas Neue">Bebas Neue (Impact Cinéma)</option>
+            <option value="Syne">Syne (Créatif & Avant-garde)</option>
+          </select>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">Casse du texte (Capitales / Minuscules)</label>
+            <div class="grid grid-cols-4 gap-1 bg-[#131722] p-1 rounded-xl border border-slate-800">
+              <button type="button" data-textcase="normal"
+                class="text-case-btn py-1.5 px-1 rounded-lg text-[10px] font-bold transition bg-pink-600 text-white shadow cursor-pointer">
+                Normal (Aa)
+              </button>
+              <button type="button" data-textcase="upper"
+                class="text-case-btn py-1.5 px-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer">
+                MAJ (AA)
+              </button>
+              <button type="button" data-textcase="lower"
+                class="text-case-btn py-1.5 px-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer">
+                min (aa)
+              </button>
+              <button type="button" data-textcase="title"
+                class="text-case-btn py-1.5 px-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white cursor-pointer">
+                Titre (Abc)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[10px] mb-1">
+              <span class="text-slate-400">Taille du texte</span>
+              <span id="fontScaleVal" class="font-bold text-slate-200">100%</span>
+            </div>
+            <input id="fontScaleRange" type="range" min="70" max="140" step="5" value="100"
+              class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+        </div>
+
+        <!-- SECTION 5 : FOND & VOILE NOIR SEMI-TRANSPARENT -->
+        <div class="p-3 rounded-2xl bg-[#090b10] border border-slate-800/90 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-pink-400">
+              Arrière-plan & Voile Noir
+            </span>
+            <button id="btnQuickDarkVeil" type="button"
+              class="px-2 py-0.5 rounded-lg bg-[#090b10] border border-slate-700 text-[10px] font-semibold text-slate-300 hover:border-pink-500 transition cursor-pointer">
+              Activer 45%
+            </button>
+          </div>
+
+          <div class="grid grid-cols-5 gap-1">
+            <button type="button" data-bg="transparent"
+              class="bg-mode-btn p-1.5 rounded-xl border border-pink-500 bg-pink-500/15 flex flex-col items-center gap-1 cursor-pointer transition">
+              <span class="w-4 h-4 rounded-full alpha-checkerboard border border-white/50"></span>
+              <span class="text-[9px] font-semibold text-white">Alpha</span>
+            </button>
+            <button type="button" data-bg="veil"
+              class="bg-mode-btn p-1.5 rounded-xl border border-slate-800 bg-[#131722] hover:border-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+              <span class="w-4 h-4 rounded-full bg-black/70 border border-slate-500"></span>
+              <span class="text-[9px] font-semibold text-slate-300">Voile</span>
+            </button>
+            <button type="button" data-bg="studio"
+              class="bg-mode-btn p-1.5 rounded-xl border border-slate-800 bg-[#131722] hover:border-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+              <span class="w-4 h-4 rounded-full bg-[#0B0B10] border border-slate-600"></span>
+              <span class="text-[9px] font-semibold text-slate-300">Studio</span>
+            </button>
+            <button type="button" data-bg="black"
+              class="bg-mode-btn p-1.5 rounded-xl border border-slate-800 bg-[#131722] hover:border-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+              <span class="w-4 h-4 rounded-full bg-black border border-slate-700"></span>
+              <span class="text-[9px] font-semibold text-slate-300">Noir</span>
+            </button>
+            <button type="button" data-bg="green"
+              class="bg-mode-btn p-1.5 rounded-xl border border-slate-800 bg-[#131722] hover:border-slate-700 flex flex-col items-center gap-1 cursor-pointer transition">
+              <span class="w-4 h-4 rounded-full bg-[#00FF00] border border-white/40"></span>
+              <span class="text-[9px] font-semibold text-slate-300">Vert</span>
+            </button>
+          </div>
+
+          <!-- Curseur opacité du voile noir -->
+          <div>
+            <div class="flex justify-between text-[10px] mb-1">
+              <span class="text-slate-400">Opacité du voile noir (assombrir un plan)</span>
+              <span id="veilOpacityVal" class="font-bold text-slate-200">0%</span>
+            </div>
+            <input id="veilOpacityRange" type="range" min="0" max="85" step="5" value="0"
+              class="w-full accent-pink-500 cursor-pointer" />
+          </div>
+
+          <label class="flex items-center justify-between pt-1 border-t border-slate-800/80 cursor-pointer">
+            <span class="text-[11px] font-medium text-slate-300">Vignettage cinéma (bords assombris)</span>
+            <input id="toggleVignette" type="checkbox" class="w-4 h-4 accent-pink-600 rounded cursor-pointer" />
+          </label>
+        </div>
+
+        <!-- SECTION 6 : IMAGE / LOGO & ANIMATION -->
+        <div class="p-3 rounded-2xl bg-[#090b10] border border-slate-800/90 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-pink-400">
+              Image / Logo & Animation
+            </span>
+            <button id="btnClearMedia" type="button"
+              class="hidden text-[10px] font-semibold text-red-400 hover:text-red-300 cursor-pointer">
+              Retirer
+            </button>
+          </div>
+
+          <label class="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl bg-[#131722] hover:bg-pink-600/15 border border-dashed border-slate-700 hover:border-pink-500 text-xs font-semibold text-slate-200 transition cursor-pointer">
+            <svg class="w-4 h-4 text-pink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span id="mediaFileNameLabel" class="truncate">Importer une image / logo (PNG, JPG, SVG)</span>
+            <input id="mediaFileInput" type="file" accept="image/*" class="hidden" />
+          </label>
+
+          <div id="mediaControlsBox" class="hidden space-y-2 pt-1">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="mediaPosSelect" class="block text-[10px] text-slate-400 mb-1">Position</label>
+                <select id="mediaPosSelect"
+                  class="w-full h-[32px] rounded-lg bg-[#131722] border border-slate-700/80 px-2 text-[11px] text-white focus:outline-none focus:border-pink-500">
+                  <option value="above-text">Au-dessus du texte</option>
+                  <option value="beside-badge">Badge à côté</option>
+                  <option value="center-watermark">Filigrane arrière-plan</option>
+                  <option value="top-corner">Coin haut-gauche</option>
+                </select>
+              </div>
+              <div>
+                <label for="mediaAnimSelect" class="block text-[10px] text-slate-400 mb-1">Animation image</label>
+                <select id="mediaAnimSelect"
+                  class="w-full h-[32px] rounded-lg bg-[#131722] border border-slate-700/80 px-2 text-[11px] text-white focus:outline-none focus:border-pink-500">
+                  <option value="scale-in">Fondu & Zoom</option>
+                  <option value="slide">Glissement vertical</option>
+                  <option value="float">Flottement doux</option>
+                  <option value="pulse">Pulsation</option>
+                  <option value="tilt-spin">Rotation subtile</option>
+                  <option value="none">Statique</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <div class="flex justify-between text-[10px] mb-0.5">
+                  <span class="text-slate-400">Taille</span>
+                  <span id="mediaSizeVal" class="font-bold text-slate-200">100%</span>
+                </div>
+                <input id="mediaSizeRange" type="range" min="40" max="180" step="10" value="100" class="w-full accent-pink-500 cursor-pointer" />
+              </div>
+              <div>
+                <div class="flex justify-between text-[10px] mb-0.5">
+                  <span class="text-slate-400">Opacité</span>
+                  <span id="mediaOpacityVal" class="font-bold text-slate-200">100%</span>
+                </div>
+                <input id="mediaOpacityRange" type="range" min="15" max="100" step="5" value="100" class="w-full accent-pink-500 cursor-pointer" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 7 : COULEUR D'ACCENTUATION, CODE HEX & FORMAT VIDÉO -->
+        <div class="p-3 rounded-2xl bg-[#090b10] border border-slate-800/90 space-y-3">
+          <!-- Couleur d'accentuation -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-pink-400">
+                Couleur d'accentuation (#HEX)
+              </span>
+              <span id="accentHexDisplay" class="text-[10px] font-mono text-pink-300">#EC4899</span>
+            </div>
+
+            <div class="flex items-center justify-between gap-1.5 p-2 rounded-xl bg-[#131722] border border-slate-800">
+              <button type="button" data-accent="#EC4899" title="Rose Vif (#EC4899)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#EC4899] ring-2 ring-white ring-offset-2 ring-offset-[#131722] transition cursor-pointer"></button>
+              <button type="button" data-accent="#F472B6" title="Rose Poudré (#F472B6)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#F472B6] opacity-85 hover:opacity-100 transition cursor-pointer"></button>
+              <button type="button" data-accent="#D946EF" title="Fuchsia (#D946EF)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#D946EF] opacity-85 hover:opacity-100 transition cursor-pointer"></button>
+              <button type="button" data-accent="#FB7185" title="Corail (#FB7185)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#FB7185] opacity-85 hover:opacity-100 transition cursor-pointer"></button>
+              <button type="button" data-accent="#FFFFFF" title="Blanc (#FFFFFF)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#FFFFFF] border border-slate-500 opacity-85 hover:opacity-100 transition cursor-pointer"></button>
+              <button type="button" data-accent="#3B82F6" title="Bleu Électrique (#3B82F6)"
+                class="accent-swatch-btn w-6 h-6 rounded-full bg-[#3B82F6] opacity-85 hover:opacity-100 transition cursor-pointer"></button>
+              <label title="Pipette libre"
+                class="w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden relative bg-gradient-to-tr from-pink-500 via-purple-500 to-cyan-400">
+                <input id="freeAccentColorInput" type="color" value="#EC4899" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+              </label>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <div class="relative flex-1 flex items-center">
+                <span id="accentHexPreviewDot" class="w-4 h-4 rounded-full bg-[#EC4899] border border-white/30 absolute left-2.5 pointer-events-none"></span>
+                <input id="accentHexInput" type="text" value="#EC4899" maxlength="7" spellcheck="false"
+                  placeholder="#EC4899"
+                  class="w-full rounded-xl bg-[#131722] border border-slate-700/80 pl-8 pr-2.5 py-1.5 text-xs font-mono font-bold uppercase text-white focus:outline-none focus:border-pink-500" />
+              </div>
+              <button id="btnCopyAccentHex" type="button" title="Copier le code couleur"
+                class="px-2.5 py-1.5 rounded-xl bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer shrink-0">
+                Copier
+              </button>
+            </div>
+          </div>
+
+          <!-- Couleur du texte principal (#HEX) -->
+          <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Couleur du texte principal (#HEX)
+              </span>
+              <div class="flex items-center gap-1">
+                <button type="button" data-texthex="#FFFFFF" class="text-hex-preset px-1.5 py-0.5 rounded bg-[#131722] border border-slate-700 text-[9px] font-semibold text-white hover:border-pink-500 cursor-pointer">Blanc</button>
+                <button type="button" data-texthex="#F8FAFC" class="text-hex-preset px-1.5 py-0.5 rounded bg-[#131722] border border-slate-700 text-[9px] font-semibold text-slate-200 hover:border-pink-500 cursor-pointer">Perle</button>
+                <button type="button" data-texthex="#09090B" class="text-hex-preset px-1.5 py-0.5 rounded bg-[#131722] border border-slate-700 text-[9px] font-semibold text-slate-300 hover:border-pink-500 cursor-pointer">Noir</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <label title="Sélecteur couleur texte" class="w-7 h-7 rounded-xl border border-slate-700 overflow-hidden cursor-pointer shrink-0 relative">
+                <input id="freeTextColorInput" type="color" value="#FFFFFF" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+                <span id="textHexPreviewSwatch" class="block w-full h-full bg-[#FFFFFF]"></span>
+              </label>
+              <input id="textHexInput" type="text" value="#FFFFFF" maxlength="7" spellcheck="false"
+                placeholder="#FFFFFF"
+                class="flex-1 rounded-xl bg-[#131722] border border-slate-700/80 px-2.5 py-1.5 text-xs font-mono font-bold uppercase text-white focus:outline-none focus:border-pink-500" />
+              <button id="btnCopyTextHex" type="button" title="Copier le code couleur texte"
+                class="px-2.5 py-1.5 rounded-xl bg-[#131722] hover:bg-pink-600/20 border border-slate-700/80 hover:border-pink-500 text-[10px] font-semibold text-slate-200 transition cursor-pointer shrink-0">
+                Copier
+              </button>
+            </div>
+          </div>
+
+          <!-- Format vidéo -->
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+            <button type="button" data-ratio="16:9"
+              class="ratio-mode-btn py-2 px-2 rounded-xl text-[11px] font-semibold transition flex items-center justify-center gap-1.5 bg-pink-600 text-white shadow cursor-pointer">
+              <span class="w-3.5 h-2.5 border border-current rounded-[2px]"></span> 16:9 (1920×1080)
+            </button>
+            <button type="button" data-ratio="9:16"
+              class="ratio-mode-btn py-2 px-2 rounded-xl text-[11px] font-semibold transition flex items-center justify-center gap-1.5 bg-[#131722] border border-slate-800 text-slate-400 hover:text-white cursor-pointer">
+              <span class="w-2.5 h-3.5 border border-current rounded-[2px]"></span> 9:16 (1080×1920)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PIED DE BARRE LATÉRALE : EXPORTATION VIDÉO DIRECTE -->
+    <div class="p-3.5 border-t border-slate-800/80 bg-[#0a0c12] mt-auto space-y-1">
+      <button id="btnExportVideo" type="button"
+        class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 active:scale-[0.99] text-white font-bold text-xs sm:text-sm shadow-lg shadow-pink-600/25 transition flex items-center justify-center gap-2 cursor-pointer">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        <span id="exportBtnText">Exporter la vidéo (.webm)</span>
+      </button>
+      <p id="exportFileHint" class="text-[10px] text-center text-slate-400 font-mono truncate">
+        intro_un-mot-deux-reponses.webm
+      </p>
+    </div>
+
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- ZONE DROITE : PRÉVISUALISATION HD 60 FPS & LECTEUR                    -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 flex flex-col items-center justify-between p-4 sm:p-6 workspace-grid relative min-h-[540px]">
+
+    <!-- Barre d'état supérieure -->
+    <div class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-3 bg-[#0d1017]/90 backdrop-blur border border-slate-800/80 px-4 py-2.5 rounded-2xl">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-pink-500 animate-pulse"></span>
+        <span id="activeModuleLabel" class="text-xs font-semibold text-slate-200">Module : Titre & Intro</span>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-slate-400">
+        <span>Fond : <strong id="bgModeLabel" class="text-pink-400">Transparent (Alpha .webm)</strong></span>
+        <span>Résolution : <strong id="resolutionLabel" class="text-white">1920 × 1080</strong></span>
+      </div>
+    </div>
+
+    <!-- Conteneur du Canvas vidéo -->
+    <div class="flex-1 w-full flex items-center justify-center my-4 overflow-hidden">
+      <div id="canvasWrapper" class="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/90 border border-slate-700/60 transition-all duration-300 flex items-center justify-center alpha-checkerboard">
+        <canvas id="studioCanvas"></canvas>
+
+        <!-- Superposition pendant l'enregistrement -->
+        <div id="recordingOverlay" class="hidden absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-30">
+          <div class="w-12 h-12 rounded-full border-4 border-pink-500 border-t-transparent animate-spin mb-3"></div>
+          <p class="text-sm font-bold text-white">Rendu vidéo HD 60 FPS...</p>
+          <div class="w-56 h-2 bg-slate-800 rounded-full overflow-hidden mt-3">
+            <div id="recordingProgressFill" class="h-full bg-pink-500 w-0 transition-all duration-75"></div>
+          </div>
+          <p id="recordingProgressText" class="text-xs font-mono text-pink-300 mt-2">0%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lecteur vidéo (Play/Pause, Scrubber temporel, Temps écoulé, Rejouer) -->
+    <div class="w-full max-w-4xl bg-[#0d1017]/95 backdrop-blur border border-slate-800/80 p-3.5 rounded-2xl flex flex-col gap-3">
+      <div class="flex items-center gap-3">
+        <span id="currentTimeLabel" class="text-xs font-mono text-slate-300 w-12 text-right">00:00.0</span>
+        <div id="timelineTrack" class="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden cursor-pointer relative">
+          <div id="timelineFill" class="h-full bg-pink-500 rounded-full w-0"></div>
+        </div>
+        <span id="totalTimeLabel" class="text-xs font-mono text-slate-400 w-12">00:04.0</span>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button id="btnPlayPause" type="button"
+            class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+            <svg id="iconPause" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <svg id="iconPlay" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+            <span id="playPauseText">Pause</span>
+          </button>
+
+          <button id="btnReplay" type="button"
+            class="px-3.5 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Rejouer</span>
+          </button>
+        </div>
+
+        <div id="toastBanner" class="hidden text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          Vidéo téléchargée !
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      function showFatalError(err) {
+        const banner = document.getElementById('fatalErrorBanner');
+        const text = document.getElementById('fatalErrorText');
+        if (banner && text) {
+          text.textContent = err && err.message ? err.message : String(err);
+          banner.classList.remove('hidden');
+        }
+        console.error('[Motion Studio]', err);
+      }
+
+      try {
+        /**
+         * =====================================================================
+         * ÉTAT GLOBAL DE L'APPLICATION : MOTION STUDIO
+         * =====================================================================
+         */
+        const state = {
+          activeTab: 'intro', // 'intro' | 'chapter' | 'lower-third'
+
+          // 1. Onglet Titre & Intro
+          intro: {
+            line1: 'Un mot,',
+            line2: 'Deux réponses',
+            showBadge: true,
+            badgeText: 'SIESTIFY • ENTRETIEN CROISÉ',
+            animStyle: 'split-reveal',
+            duration: 4.0
+          },
+
+          // 2. Onglet Intertitres & Chapitres
+          chapter: {
+            sequenceMode: false,
+            topText: 'CHAPITRE 01',
+            mainText: 'Manche 1',
+            subText: '',
+            sequenceLines: 'CHAPITRE 01 | Manche 1\nCHAPITRE 02 | Vrai ou Faux\nCHAPITRE 03 | Premièrement',
+            animStyle: 'slide-mask',
+            durationPerSlide: 2.5
+          },
+
+          // 3. Onglet Synthés (Lower Thirds)
+          lowerThird: {
+            speakers: [
+              { name: 'Gildas OVONO MBA', role: 'Co-founder & CEO Siestify' },
+              { name: 'John SELAN', role: 'Co-founder Siestify & Myup' }
+            ],
+            selectedIndex: 0,
+            position: 'bottom-right', // 'bottom-left' | 'bottom-center' | 'bottom-right'
+            cardStyle: 'dark-glass',  // 'dark-glass' | 'editorial-white' | 'rose-signature'
+            animStyle: 'drawer-slide',// 'drawer-slide' | 'curtain-mask' | 'line-expand' | 'elastic-pop'
+            duration: 4.5
+          },
+
+          // 4. Typographie, Casse, Fond, Voile Noir & Format
+          global: {
+            fontFamily: 'Inter',
+            fontScale: 1.0,
+            textCase: 'normal',       // 'normal' | 'upper' | 'lower' | 'title'
+            accentColor: '#EC4899',   // Rose Vif par défaut
+            textColor: '#FFFFFF',     // Blanc pur par défaut
+            bgMode: 'transparent',    // 'transparent' | 'veil' | 'studio' | 'black' | 'green'
+            veilOpacity: 0.0,         // 0.0 à 0.85
+            vignette: false,
+            ratio: '16:9'             // '16:9' | '9:16'
+          },
+
+          // 5. Image / Logo importé
+          media: {
+            imageObj: null,
+            fileName: '',
+            position: 'above-text',   // 'above-text' | 'beside-badge' | 'center-watermark' | 'top-corner'
+            animStyle: 'scale-in',    // 'scale-in' | 'slide' | 'float' | 'pulse' | 'tilt-spin' | 'none'
+            sizeScale: 1.0,
+            opacity: 1.0
+          },
+
+          // 6. Lecteur temps réel
+          playback: {
+            isPlaying: true,
+            isRecording: false,
+            elapsed: 0,
+            lastTimestamp: null
+          }
+        };
+
+        const BG_CONFIG = {
+          transparent: { label: 'Transparent (Alpha .webm)', fill: null },
+          veil:        { label: 'Voile Noir Semi-Transparent', fill: null },
+          studio:      { label: 'Studio Sombre (#0B0B10)',    fill: '#0B0B10' },
+          black:       { label: 'Noir Pur (#000000)',         fill: '#000000' },
+          green:       { label: 'Fond Vert (#00FF00)',        fill: '#00FF00' }
+        };
+
+        const FONT_STACKS = {
+          'Inter': '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          'Montserrat': '"Montserrat", "Inter", "Segoe UI", sans-serif',
+          'Playfair Display': '"Playfair Display", Georgia, "Times New Roman", serif',
+          'Space Grotesk': '"Space Grotesk", "Inter", sans-serif',
+          'Bebas Neue': '"Bebas Neue", Impact, "Arial Narrow", sans-serif',
+          'Syne': '"Syne", "Inter", sans-serif'
+        };
+
+        // Références DOM principales
+        const canvas = document.getElementById('studioCanvas');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        const canvasWrapper = document.getElementById('canvasWrapper');
+
+        const activeModuleLabel = document.getElementById('activeModuleLabel');
+        const bgModeLabel = document.getElementById('bgModeLabel');
+        const resolutionLabel = document.getElementById('resolutionLabel');
+        const exportFileHint = document.getElementById('exportFileHint');
+
+        const currentTimeLabel = document.getElementById('currentTimeLabel');
+        const totalTimeLabel = document.getElementById('totalTimeLabel');
+        const timelineTrack = document.getElementById('timelineTrack');
+        const timelineFill = document.getElementById('timelineFill');
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const iconPause = document.getElementById('iconPause');
+        const iconPlay = document.getElementById('iconPlay');
+        const playPauseText = document.getElementById('playPauseText');
+        const btnReplay = document.getElementById('btnReplay');
+        const btnExportVideo = document.getElementById('btnExportVideo');
+        const exportBtnText = document.getElementById('exportBtnText');
+        const recordingOverlay = document.getElementById('recordingOverlay');
+        const recordingProgressFill = document.getElementById('recordingProgressFill');
+        const recordingProgressText = document.getElementById('recordingProgressText');
+        const toastBanner = document.getElementById('toastBanner');
+
+        /**
+         * =====================================================================
+         * UTILITAIRES, EASING & TRANSFORMATION DE CASSE
+         * =====================================================================
+         */
+        function getFontStack(fontName) {
+          return FONT_STACKS[fontName] || FONT_STACKS['Inter'];
+        }
+
+        function clamp(val, min, max) {
+          return Math.min(Math.max(val, min), max);
+        }
+
+        function easeOutExpo(x) {
+          return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+        }
+
+        function easeOutQuint(x) {
+          return 1 - Math.pow(1 - x, 5);
+        }
+
+        function easeOutBack(x) {
+          const c1 = 1.70158;
+          const c3 = c1 + 1;
+          return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        }
+
+        function easeInCubic(x) {
+          return x * x * x;
+        }
+
+        function hexToRgba(hex, alpha) {
+          const clean = hex.replace('#', '');
+          const num = parseInt(clean, 16);
+          const r = (num >> 16) & 255;
+          const g = (num >> 8) & 255;
+          const b = num & 255;
+          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function applyCasing(text) {
+          if (!text) return '';
+          const mode = state.global.textCase;
+          if (mode === 'upper') return text.toUpperCase();
+          if (mode === 'lower') return text.toLowerCase();
+          if (mode === 'title') {
+            return text
+              .toLowerCase()
+              .replace(/(^|[\s\-•'’])([a-zA-ZÀ-ÿ])/g, function (_, sep, ch) {
+                return sep + ch.toUpperCase();
+              });
+          }
+          return text;
+        }
+
+        function slugify(str) {
+          return String(str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') || 'video';
+        }
+
+        function formatTimecode(sec) {
+          const mins = Math.floor(sec / 60);
+          const rem = (sec % 60).toFixed(1).padStart(4, '0');
+          return `${String(mins).padStart(2, '0')}:${rem}`;
+        }
+
+        function showToast(msg, isError = false) {
+          toastBanner.textContent = msg;
+          toastBanner.className = isError
+            ? 'text-xs font-medium px-3 py-1.5 rounded-lg bg-red-500/15 text-red-300 border border-red-500/30'
+            : 'text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+          toastBanner.classList.remove('hidden');
+          setTimeout(() => toastBanner.classList.add('hidden'), 4500);
+        }
+
+        function drawRoundedRect(context, x, y, w, h, r) {
+          const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+          context.beginPath();
+          context.moveTo(x + radius, y);
+          context.arcTo(x + w, y, x + w, y + h, radius);
+          context.arcTo(x + w, y + h, x, y + h, radius);
+          context.arcTo(x, y + h, x, y, radius);
+          context.arcTo(x, y, x + w, y, radius);
+          context.closePath();
+        }
+
+        function applyTextShadow(enabled) {
+          if (enabled) {
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+            ctx.shadowBlur = 24;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 6;
+          } else {
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          }
+        }
+
+        function getChapterSequenceItems() {
+          const lines = state.chapter.sequenceLines
+            .split('\n')
+            .map(l => l.trim())
+            .filter(Boolean);
+
+          if (lines.length === 0) {
+            return [{ top: '', main: 'Chapitre 1', sub: '' }];
+          }
+          return lines.map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 2) {
+              return { top: parts[0], main: parts[1], sub: parts[2] || '' };
+            }
+            return { top: '', main: parts[0], sub: '' };
+          });
+        }
+
+        function getTotalDuration() {
+          if (state.activeTab === 'intro') return state.intro.duration;
+          if (state.activeTab === 'chapter') {
+            if (!state.chapter.sequenceMode) return state.chapter.durationPerSlide;
+            return getChapterSequenceItems().length * state.chapter.durationPerSlide;
+          }
+          return state.lowerThird.duration;
+        }
+
+        function getSmartFilename() {
+          if (state.activeTab === 'intro') {
+            const label = slugify(`${state.intro.line1} ${state.intro.line2}`);
+            return `intro_${label}.webm`;
+          }
+          if (state.activeTab === 'chapter') {
+            if (!state.chapter.sequenceMode) {
+              return `intertitre_${slugify(state.chapter.mainText)}.webm`;
+            }
+            return `chapitres_sequence_${state.global.ratio.replace(':', 'x')}.webm`;
+          }
+          const sp = state.lowerThird.speakers[state.lowerThird.selectedIndex];
+          return `synthe_${slugify(sp ? sp.name : 'intervenant')}.webm`;
+        }
+
+        function updateMetadataUI() {
+          totalTimeLabel.textContent = formatTimecode(getTotalDuration());
+          exportFileHint.textContent = getSmartFilename();
+        }
+
+        /**
+         * =====================================================================
+         * DIMENSIONS HD & ADAPTATION RESPONSIVE DU CANVAS
+         * =====================================================================
+         */
+        function updateCanvasResolution() {
+          if (state.global.ratio === '16:9') {
+            canvas.width = 1920;
+            canvas.height = 1080;
+            resolutionLabel.textContent = '1920 × 1080';
+          } else {
+            canvas.width = 1080;
+            canvas.height = 1920;
+            resolutionLabel.textContent = '1080 × 1920';
+          }
+          fitCanvasToViewport();
+          updateMetadataUI();
+        }
+
+        function fitCanvasToViewport() {
+          const isVertical = state.global.ratio === '9:16';
+          const maxH = Math.max(260, Math.min(window.innerHeight * 0.62, 600));
+          const maxW = Math.max(300, Math.min(window.innerWidth * 0.88, 860));
+
+          if (isVertical) {
+            const height = maxH;
+            const width = height * (9 / 16);
+            canvasWrapper.style.width = `${width}px`;
+            canvasWrapper.style.height = `${height}px`;
+          } else {
+            let width = maxW;
+            let height = width * (9 / 16);
+            if (height > maxH) {
+              height = maxH;
+              width = height * (16 / 9);
+            }
+            canvasWrapper.style.width = `${width}px`;
+            canvasWrapper.style.height = `${height}px`;
+          }
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+        }
+
+        /**
+         * =====================================================================
+         * RENDU ARRIÈRE-PLAN, VOILE NOIR SEMI-TRANSPARENT & VIGNETTAGE
+         * =====================================================================
+         */
+        function drawBackground(safeTime, totalDur) {
+          const W = canvas.width;
+          const H = canvas.height;
+          const bgInfo = BG_CONFIG[state.global.bgMode];
+
+          ctx.clearRect(0, 0, W, H);
+
+          if (bgInfo && bgInfo.fill) {
+            ctx.fillStyle = bgInfo.fill;
+            ctx.fillRect(0, 0, W, H);
+          }
+
+          const enterT = easeOutExpo(clamp(safeTime / 0.45, 0, 1));
+          const exitDur = Math.min(0.55, totalDur * 0.20);
+          const exitRaw = safeTime > (totalDur - exitDur)
+            ? clamp((safeTime - (totalDur - exitDur)) / exitDur, 0, 1)
+            : 0;
+          const veilEnvelope = enterT * (1 - easeInCubic(exitRaw));
+
+          if (state.global.veilOpacity > 0.005) {
+            ctx.save();
+            ctx.fillStyle = `rgba(0, 0, 0, ${state.global.veilOpacity * veilEnvelope})`;
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+          }
+
+          if (state.global.vignette) {
+            ctx.save();
+            const cx = W / 2;
+            const cy = H / 2;
+            const radius = Math.max(W, H) * 0.72;
+            const grad = ctx.createRadialGradient(cx, cy, radius * 0.35, cx, cy, radius);
+            grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            grad.addColorStop(1, `rgba(0, 0, 0, ${0.65 * veilEnvelope})`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+          }
+        }
+
+        /**
+         * =====================================================================
+         * RENDU DE L'IMAGE / LOGO IMPORTÉ AVEC SES 6 ANIMATIONS
+         * =====================================================================
+         */
+        function drawLogo(localTime, segmentDuration, textAnchorInfo = null) {
+          const img = state.media.imageObj;
+          if (!img || !img.complete || img.naturalWidth === 0) return;
+
+          const W = canvas.width;
+          const H = canvas.height;
+          const isVertical = state.global.ratio === '9:16';
+
+          const enterDur = Math.min(0.65, segmentDuration * 0.25);
+          const exitDur = Math.min(0.55, segmentDuration * 0.22);
+          const exitStart = segmentDuration - exitDur;
+
+          const enterRaw = clamp(localTime / enterDur, 0, 1);
+          const exitRaw = localTime > exitStart ? clamp((localTime - exitStart) / exitDur, 0, 1) : 0;
+
+          const easeIn = easeOutExpo(enterRaw);
+          const easeOut = easeInCubic(exitRaw);
+          const envelope = easeIn * (1 - easeOut);
+
+          if (envelope <= 0.001) return;
+
+          const baseMaxDim = (isVertical ? 210 : 230) * state.media.sizeScale;
+          const aspect = img.naturalWidth / img.naturalHeight;
+          let drawW = baseMaxDim;
+          let drawH = baseMaxDim;
+          if (aspect >= 1) {
+            drawH = drawW / aspect;
+          } else {
+            drawW = drawH * aspect;
+          }
+
+          let targetX = W / 2;
+          let targetY = H / 2;
+          const pos = state.media.position;
+
+          if (pos === 'above-text') {
+            targetX = W / 2;
+            if (textAnchorInfo && typeof textAnchorInfo.topY === 'number') {
+              targetY = Math.max(drawH / 2 + 50, textAnchorInfo.topY - drawH / 2 - 36);
+            } else {
+              targetY = H * (isVertical ? 0.30 : 0.25);
+            }
+          } else if (pos === 'beside-badge') {
+            if (textAnchorInfo && typeof textAnchorInfo.badgeLeftX === 'number') {
+              targetX = Math.max(drawW / 2 + 40, textAnchorInfo.badgeLeftX - drawW / 2 - 24);
+              targetY = textAnchorInfo.badgeY;
+            } else {
+              targetX = W * 0.22;
+              targetY = H * 0.22;
+            }
+          } else if (pos === 'center-watermark') {
+            drawW *= 2.1;
+            drawH *= 2.1;
+            targetX = W / 2;
+            targetY = H / 2;
+          } else if (pos === 'top-corner') {
+            const margin = isVertical ? 85 : 95;
+            targetX = margin + drawW / 2;
+            targetY = margin + drawH / 2;
+          }
+
+          const anim = state.media.animStyle;
+          let animScale = 1;
+          let animOffsetX = 0;
+          let animOffsetY = 0;
+          let animRotation = 0;
+          let animAlpha = state.media.opacity * (1 - easeOut);
+
+          if (anim === 'scale-in') {
+            animAlpha *= easeIn;
+            animScale = 0.72 + 0.28 * easeIn;
+          } else if (anim === 'slide') {
+            animAlpha *= easeIn;
+            animOffsetY = (1 - easeIn) * -70 - easeOut * 40;
+          } else if (anim === 'float') {
+            animAlpha *= easeIn;
+            animOffsetY = Math.sin(localTime * 3.2) * 14;
+          } else if (anim === 'pulse') {
+            animAlpha *= easeIn;
+            animScale = 1 + Math.sin(localTime * 4.5) * 0.065;
+          } else if (anim === 'tilt-spin') {
+            animAlpha *= easeIn;
+            animScale = 0.85 + 0.15 * easeIn;
+            animRotation = Math.sin(localTime * 2.4) * 0.12 + (1 - easeIn) * -0.25;
+          }
+
+          ctx.save();
+          ctx.globalAlpha = clamp(animAlpha, 0, 1);
+          ctx.translate(targetX + animOffsetX, targetY + animOffsetY);
+          ctx.rotate(animRotation);
+          ctx.scale(animScale, animScale);
+          ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+          ctx.restore();
+        }
+
+        /**
+         * Dessin mot par mot avec rebond élastique (Pop YouTube / Reels)
+         */
+        function drawWordPopLine(text, cx, y, startTime, localTime, fontSize, color, accentHighlightLastWord = false) {
+          const words = text.split(/\s+/).filter(Boolean);
+          if (words.length === 0) return;
+
+          const fontStack = getFontStack(state.global.fontFamily);
+          ctx.font = `900 ${fontSize}px ${fontStack}`;
+          const spaceW = ctx.measureText(' ').width * 1.15;
+          const wordWidths = words.map(w => ctx.measureText(w).width);
+          const totalW = wordWidths.reduce((acc, w) => acc + w, 0) + spaceW * (words.length - 1);
+
+          let cursorX = cx - totalW / 2;
+          words.forEach((word, idx) => {
+            const wWidth = wordWidths[idx];
+            const wordCenterX = cursorX + wWidth / 2;
+            const wordStart = startTime + idx * 0.13;
+            const progress = clamp((localTime - wordStart) / 0.42, 0, 1);
+
+            if (progress > 0) {
+              const popScale = easeOutBack(progress);
+              const alpha = clamp(progress * 2.2, 0, 1);
+
+              ctx.save();
+              ctx.globalAlpha *= alpha;
+              ctx.translate(wordCenterX, y + (1 - easeOutExpo(progress)) * 22);
+              ctx.scale(popScale, popScale);
+              ctx.fillStyle = (accentHighlightLastWord && idx === words.length - 1)
+                ? state.global.accentColor
+                : color;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(word, 0, 0);
+              ctx.restore();
+            }
+            cursorX += wWidth + spaceW;
+          });
+        }
+
+        /**
+         * =====================================================================
+         * RENDU ONGLET 1 : TITRE & INTRO (7 ANIMATIONS POPULAIRES)
+         * =====================================================================
+         */
+        function drawPillBadge(cx, y, rawText, alpha, offsetY, isVertical) {
+          const text = applyCasing(rawText.trim());
+          if (!text || alpha <= 0.005) return null;
+
+          const fontStack = getFontStack(state.global.fontFamily);
+          ctx.save();
+          ctx.globalAlpha = clamp(alpha, 0, 1);
+          const fontSize = Math.round((isVertical ? 24 : 22) * Math.min(1.15, state.global.fontScale));
+          ctx.font = `700 ${fontSize}px ${fontStack}`;
+          if ('letterSpacing' in ctx) ctx.letterSpacing = '4px';
+
+          const textW = ctx.measureText(text).width;
+          const padX = 28;
+          const padY = 12;
+          const pillW = textW + padX * 2;
+          const pillH = fontSize + padY * 2;
+          const drawY = y + offsetY;
+
+          drawRoundedRect(ctx, cx - pillW / 2, drawY - pillH / 2, pillW, pillH, pillH / 2);
+          ctx.fillStyle = 'rgba(13, 16, 24, 0.82)';
+          ctx.fill();
+
+          ctx.strokeStyle = hexToRgba(state.global.accentColor, 0.85);
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, cx + 2, drawY + 1);
+          ctx.restore();
+
+          return { leftX: cx - pillW / 2, centerY: drawY, topY: drawY - pillH / 2 };
+        }
+
+        function drawIntro(safeTime) {
+          const W = canvas.width;
+          const H = canvas.height;
+          const cx = W / 2;
+          const cy = H / 2;
+          const isVertical = state.global.ratio === '9:16';
+          const fontStack = getFontStack(state.global.fontFamily);
+
+          const primaryColor = state.global.textColor;
+          const accentColor = state.global.accentColor;
+          const useShadow = state.global.bgMode !== 'green';
+
+          const line1 = applyCasing(state.intro.line1.trim());
+          const line2 = applyCasing(state.intro.line2.trim());
+          const hasLine2 = Boolean(line2);
+
+          const totalDur = state.intro.duration;
+          const exitDur = Math.min(0.60, totalDur * 0.22);
+          const exitStart = totalDur - exitDur;
+          const exitRaw = safeTime > exitStart ? clamp((safeTime - exitStart) / exitDur, 0, 1) : 0;
+          const easeOut = easeInCubic(exitRaw);
+          const exitAlpha = 1 - easeOut;
+
+          let baseSize = (isVertical ? 98 : 114) * state.global.fontScale;
+          if (state.global.fontFamily === 'Bebas Neue') baseSize *= 1.18;
+
+          ctx.font = `800 ${Math.round(baseSize)}px ${fontStack}`;
+          const maxLineW = W * (isVertical ? 0.86 : 0.82);
+          const maxMeasured = Math.max(
+            ctx.measureText(line1).width,
+            hasLine2 ? ctx.measureText(line2).width : 0
+          );
+          if (maxMeasured > maxLineW && maxMeasured > 0) {
+            baseSize = baseSize * (maxLineW / maxMeasured);
+          }
+          const fontSize = Math.round(baseSize);
+
+          if (state.media.position === 'center-watermark') {
+            drawLogo(safeTime, totalDur);
+          }
+
+          if (exitAlpha <= 0.001) return;
+
+          const anim = state.intro.animStyle;
+          const y1 = hasLine2 ? (cy - fontSize * 0.64) : cy;
+          const y2 = cy + fontSize * 0.68;
+          const badgeTargetY = y1 - fontSize * 1.05;
+
+          let badgeBox = null;
+
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // 1. Split & Révélation
+          if (anim === 'split-reveal') {
+            const lineT = easeOutExpo(clamp(safeTime / 0.55, 0, 1));
+            const t1 = easeOutQuint(clamp((safeTime - 0.20) / 0.70, 0, 1));
+            const t2 = easeOutQuint(clamp((safeTime - 0.34) / 0.70, 0, 1));
+            const badgeT = easeOutExpo(clamp((safeTime - 0.48) / 0.60, 0, 1));
+
+            const splitY = hasLine2 ? cy : (cy + fontSize * 0.66);
+            const dividerMaxW = Math.min(isVertical ? 520 : 660, W * 0.52);
+            const dividerW = dividerMaxW * lineT * (1 - easeOut);
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            ctx.fillStyle = accentColor;
+            applyTextShadow(useShadow);
+            drawRoundedRect(ctx, cx - dividerW / 2, splitY - 3, dividerW, 6, 3);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, W, splitY - 4);
+            ctx.clip();
+            ctx.globalAlpha = exitAlpha * clamp(t1 * 1.4, 0, 1);
+            ctx.font = `800 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            const start1 = splitY + fontSize * 0.52;
+            ctx.fillText(line1, cx, start1 + (y1 - start1) * t1 - easeOut * 28);
+            ctx.restore();
+
+            if (hasLine2) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(0, splitY + 4, W, H - splitY);
+              ctx.clip();
+              ctx.globalAlpha = exitAlpha * clamp(t2 * 1.4, 0, 1);
+              ctx.font = `800 ${fontSize}px ${fontStack}`;
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              const start2 = splitY - fontSize * 0.52;
+              ctx.fillText(line2, cx, start2 + (y2 - start2) * t2 + easeOut * 28);
+              ctx.restore();
+            }
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -16, isVertical);
+            }
+          }
+
+          // 2. Mot par Mot (Pop YouTube / Reels)
+          else if (anim === 'word-pop') {
+            const badgeT = easeOutExpo(clamp(safeTime / 0.45, 0, 1));
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            applyTextShadow(useShadow);
+
+            drawWordPopLine(line1, cx, y1 - easeOut * 22, 0.08, safeTime, fontSize, primaryColor, false);
+
+            if (hasLine2) {
+              const words1Count = line1.split(/\s+/).filter(Boolean).length;
+              const line2Start = 0.08 + words1Count * 0.14 + 0.08;
+              drawWordPopLine(line2, cx, y2 - easeOut * 22, line2Start, safeTime, fontSize, accentColor, false);
+            }
+            ctx.restore();
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -14, isVertical);
+            }
+          }
+
+          // 3. Cinéma Minimal
+          else if (anim === 'cinema-minimal') {
+            const t1 = easeOutQuint(clamp(safeTime / 0.72, 0, 1));
+            const t2 = easeOutQuint(clamp((safeTime - 0.22) / 0.72, 0, 1));
+            const barT = easeOutExpo(clamp((safeTime - 0.40) / 0.60, 0, 1));
+            const badgeT = easeOutExpo(clamp((safeTime - 0.48) / 0.60, 0, 1));
+
+            const drift = 0.97 + 0.04 * (safeTime / totalDur);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(drift, drift);
+            ctx.translate(-cx, -cy);
+
+            const maskH = fontSize * 1.3;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, y1 - maskH / 2, W, maskH);
+            ctx.clip();
+            ctx.globalAlpha = exitAlpha;
+            ctx.font = `800 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(line1, cx, y1 + (1 - t1) * fontSize * 1.12 - easeOut * 30);
+            ctx.restore();
+
+            if (hasLine2) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(0, y2 - maskH / 2, W, maskH);
+              ctx.clip();
+              ctx.globalAlpha = exitAlpha;
+              ctx.font = `800 ${fontSize}px ${fontStack}`;
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(line2, cx, y2 + (1 - t2) * fontSize * 1.12 - easeOut * 30);
+              ctx.restore();
+            }
+
+            const barW = 145 * barT * (1 - easeOut);
+            const barY = (hasLine2 ? y2 : y1) + fontSize * 0.78;
+            ctx.globalAlpha = exitAlpha;
+            ctx.fillStyle = accentColor;
+            applyTextShadow(useShadow);
+            drawRoundedRect(ctx, cx - barW / 2, barY, barW, 8, 4);
+            ctx.fill();
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -14, isVertical);
+            }
+            ctx.restore();
+          }
+
+          // 4. Impact Typographique
+          else if (anim === 'kinetic-impact') {
+            const t1 = easeOutExpo(clamp(safeTime / 0.62, 0, 1));
+            const t2 = easeOutExpo(clamp((safeTime - 0.18) / 0.65, 0, 1));
+            const pillT = easeOutQuint(clamp((safeTime - 0.30) / 0.58, 0, 1));
+            const badgeT = easeOutExpo(clamp((safeTime - 0.44) / 0.58, 0, 1));
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * t1;
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            const sp1 = (1 - t1) * 34;
+            if ('letterSpacing' in ctx) ctx.letterSpacing = `${sp1}px`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(line1, cx + sp1 * 0.4, y1 - easeOut * 24);
+            ctx.restore();
+
+            if (hasLine2) {
+              ctx.save();
+              ctx.font = `900 ${fontSize}px ${fontStack}`;
+              const w2 = ctx.measureText(line2).width;
+              const fullW = w2 + 72;
+              const boxH = fontSize + 34;
+              const curW = fullW * pillT * (1 - easeOut);
+
+              ctx.globalAlpha = exitAlpha;
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              drawRoundedRect(ctx, cx - fullW / 2, y2 - boxH / 2, curW, boxH, 18);
+              ctx.fill();
+
+              applyTextShadow(false);
+              ctx.globalAlpha = exitAlpha * t2;
+              const sp2 = (1 - t2) * 28;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = `${sp2}px`;
+              ctx.fillStyle = accentColor.toUpperCase() === '#FFFFFF' ? '#09090B' : '#FFFFFF';
+              ctx.fillText(line2, cx + sp2 * 0.4, y2 + 3);
+              ctx.restore();
+            }
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -14, isVertical);
+            }
+          }
+
+          // 5. Machine à Écrire & Curseur
+          else if (anim === 'typewriter') {
+            const badgeT = easeOutExpo(clamp(safeTime / 0.45, 0, 1));
+            const type1T = clamp(safeTime / 0.65, 0, 1);
+            const type2T = hasLine2 ? clamp((safeTime - 0.68) / 0.75, 0, 1) : 1;
+
+            const vis1 = line1.slice(0, Math.ceil(line1.length * type1T));
+            const vis2 = hasLine2 ? line2.slice(0, Math.ceil(line2.length * type2T)) : '';
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            ctx.font = `800 ${fontSize}px ${fontStack}`;
+            applyTextShadow(useShadow);
+
+            ctx.fillStyle = primaryColor;
+            ctx.fillText(vis1, cx, y1 - easeOut * 20);
+
+            if (hasLine2) {
+              ctx.fillStyle = accentColor;
+              ctx.fillText(vis2, cx, y2 - easeOut * 20);
+            }
+
+            const blink = Math.floor(safeTime * 5) % 2 === 0;
+            if (blink) {
+              applyTextShadow(false);
+              ctx.fillStyle = accentColor;
+              const activeOnLine2 = hasLine2 && type1T >= 1;
+              const curText = activeOnLine2 ? vis2 : vis1;
+              const curY = (activeOnLine2 ? y2 : y1) - easeOut * 20;
+              const textW = ctx.measureText(curText).width;
+              ctx.fillRect(cx + textW / 2 + 12, curY - fontSize * 0.42, Math.max(8, fontSize * 0.06), fontSize * 0.84);
+            }
+            ctx.restore();
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -14, isVertical);
+            }
+          }
+
+          // 6. Flou Cinétique (Blur Reveal)
+          else if (anim === 'blur-reveal') {
+            const t1 = easeOutQuint(clamp(safeTime / 0.80, 0, 1));
+            const t2 = easeOutQuint(clamp((safeTime - 0.22) / 0.80, 0, 1));
+            const badgeT = easeOutExpo(clamp((safeTime - 0.40) / 0.60, 0, 1));
+
+            ctx.save();
+            ctx.font = `800 ${fontSize}px ${fontStack}`;
+            applyTextShadow(useShadow);
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * t1;
+            if ('filter' in ctx) ctx.filter = `blur(${Math.round((1 - t1) * 18)}px)`;
+            ctx.fillStyle = primaryColor;
+            ctx.fillText(line1, cx - (1 - t1) * 75 + easeOut * 45, y1);
+            ctx.restore();
+
+            if (hasLine2) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * t2;
+              if ('filter' in ctx) ctx.filter = `blur(${Math.round((1 - t2) * 18)}px)`;
+              ctx.fillStyle = accentColor;
+              ctx.fillText(line2, cx + (1 - t2) * 75 - easeOut * 45, y2);
+              ctx.restore();
+            }
+            ctx.restore();
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, badgeTargetY, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -14, isVertical);
+            }
+          }
+
+          // 7. Carton Éditorial & Viseurs
+          else if (anim === 'editorial-card') {
+            const cardT = easeOutExpo(clamp(safeTime / 0.65, 0, 1));
+            const badgeT = easeOutExpo(clamp((safeTime - 0.16) / 0.58, 0, 1));
+            const t1 = easeOutQuint(clamp((safeTime - 0.28) / 0.65, 0, 1));
+            const t2 = easeOutQuint(clamp((safeTime - 0.42) / 0.65, 0, 1));
+
+            const cardW = Math.min(isVertical ? W * 0.88 : W * 0.72, 1380);
+            const cardH = isVertical ? H * 0.44 : H * 0.56;
+            const scale = 0.94 + 0.06 * cardT;
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * cardT;
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+            ctx.translate(-cx, -cy);
+
+            drawRoundedRect(ctx, cx - cardW / 2, cy - cardH / 2, cardW, cardH, 30);
+            ctx.fillStyle = 'rgba(13, 16, 24, 0.88)';
+            ctx.fill();
+
+            ctx.strokeStyle = hexToRgba(accentColor, 0.65);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            const cLen = 24;
+            const pad = 24;
+            const l = cx - cardW / 2 + pad;
+            const r = cx + cardW / 2 - pad;
+            const t = cy - cardH / 2 + pad;
+            const b = cy + cardH / 2 - pad;
+
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(l, t + cLen); ctx.lineTo(l, t); ctx.lineTo(l + cLen, t);
+            ctx.moveTo(r - cLen, t); ctx.lineTo(r, t); ctx.lineTo(r, t + cLen);
+            ctx.moveTo(l, b - cLen); ctx.lineTo(l, b); ctx.lineTo(l + cLen, b);
+            ctx.moveTo(r - cLen, b); ctx.lineTo(r, b); ctx.lineTo(r, b - cLen);
+            ctx.stroke();
+
+            if (state.intro.showBadge) {
+              badgeBox = drawPillBadge(cx, cy - cardH / 2 + 64, state.intro.badgeText, badgeT * exitAlpha, (1 - badgeT) * -10, isVertical);
+            }
+
+            ctx.globalAlpha = exitAlpha * t1;
+            ctx.font = `800 ${Math.round(fontSize * 0.90)}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            ctx.fillText(line1, cx, (hasLine2 ? cy - fontSize * 0.34 : cy + 12) + (1 - t1) * 22);
+
+            if (hasLine2) {
+              ctx.globalAlpha = exitAlpha * t2;
+              ctx.font = `800 ${Math.round(fontSize * 0.90)}px ${fontStack}`;
+              ctx.fillStyle = accentColor;
+              ctx.fillText(line2, cx, cy + fontSize * 0.66 + (1 - t2) * 22);
+            }
+
+            ctx.restore();
+          }
+
+          ctx.restore();
+
+          if (state.media.position !== 'center-watermark') {
+            const topBoundary = badgeBox ? badgeBox.topY : (y1 - fontSize * 0.65);
+            drawLogo(safeTime, totalDur, {
+              topY: topBoundary,
+              badgeLeftX: badgeBox ? badgeBox.leftX : (cx - 220),
+              badgeY: badgeBox ? badgeBox.centerY : badgeTargetY
+            });
+          }
+        }
+
+        /**
+         * =====================================================================
+         * RENDU ONGLET 2 : INTERTITRES & CHAPITRES (7 ANIMATIONS POPULAIRES)
+         * =====================================================================
+         */
+        function drawChapter(safeTime) {
+          const W = canvas.width;
+          const H = canvas.height;
+          const cx = W / 2;
+          const cy = H / 2;
+          const isVertical = state.global.ratio === '9:16';
+          const fontStack = getFontStack(state.global.fontFamily);
+
+          const primaryColor = state.global.textColor;
+          const subColor = '#CBD5E1';
+          const accentColor = state.global.accentColor;
+          const useShadow = state.global.bgMode !== 'green';
+
+          const segDur = state.chapter.durationPerSlide;
+          let localTime = safeTime;
+          let topLabel = state.chapter.topText;
+          let mainLabel = state.chapter.mainText;
+          let subLabel = state.chapter.subText;
+
+          if (state.chapter.sequenceMode) {
+            const items = getChapterSequenceItems();
+            const idx = Math.min(items.length - 1, Math.floor(safeTime / segDur));
+            localTime = safeTime - idx * segDur;
+            topLabel = items[idx].top;
+            mainLabel = items[idx].main;
+            subLabel = items[idx].sub;
+          }
+
+          topLabel = applyCasing(topLabel.trim());
+          mainLabel = applyCasing(mainLabel.trim() || 'Chapitre');
+          subLabel = applyCasing(subLabel.trim());
+
+          const exitDur = Math.min(0.50, segDur * 0.22);
+          const exitStart = segDur - exitDur;
+          const exitRaw = localTime > exitStart ? clamp((localTime - exitStart) / exitDur, 0, 1) : 0;
+          const easeOut = easeInCubic(exitRaw);
+          const exitAlpha = 1 - easeOut;
+
+          let baseSize = (isVertical ? 106 : 128) * state.global.fontScale;
+          if (state.global.fontFamily === 'Bebas Neue') baseSize *= 1.2;
+
+          ctx.font = `900 ${Math.round(baseSize)}px ${fontStack}`;
+          const maxW = W * (isVertical ? 0.86 : 0.84);
+          const measured = ctx.measureText(mainLabel).width;
+          if (measured > maxW && measured > 0) {
+            baseSize = baseSize * (maxW / measured);
+          }
+          const fontSize = Math.round(baseSize);
+          const topFontSize = Math.round((isVertical ? 26 : 24) * Math.min(1.2, state.global.fontScale));
+          const subFontSize = Math.round((isVertical ? 32 : 30) * Math.min(1.2, state.global.fontScale));
+
+          if (state.media.position === 'center-watermark') {
+            drawLogo(localTime, segDur);
+          }
+
+          if (exitAlpha <= 0.001) return;
+
+          const anim = state.chapter.animStyle;
+          const topY = cy - fontSize * 0.92;
+          const subY = cy + fontSize * 0.92;
+
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          // 1. Slide & Masque
+          if (anim === 'slide-mask') {
+            const topT = easeOutExpo(clamp(localTime / 0.50, 0, 1));
+            const mainT = easeOutQuint(clamp((localTime - 0.12) / 0.62, 0, 1));
+            const barT = easeOutExpo(clamp((localTime - 0.28) / 0.55, 0, 1));
+            const subT = easeOutQuint(clamp((localTime - 0.34) / 0.55, 0, 1));
+
+            if (topLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * topT;
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 3, topY + (1 - topT) * 20 - easeOut * 15);
+              ctx.restore();
+            }
+
+            ctx.save();
+            const maskH = fontSize * 1.38;
+            ctx.beginPath();
+            ctx.rect(0, cy - maskH / 2, W, maskH);
+            ctx.clip();
+
+            ctx.globalAlpha = exitAlpha;
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(mainLabel, cx, cy + (1 - mainT) * fontSize * 1.15 - easeOut * 32);
+            ctx.restore();
+
+            const barW = Math.min(180, W * 0.18) * barT * (1 - easeOut);
+            const barY = cy + fontSize * 0.68;
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            ctx.fillStyle = accentColor;
+            applyTextShadow(useShadow);
+            drawRoundedRect(ctx, cx - barW / 2, barY, barW, 9, 4.5);
+            ctx.fill();
+            ctx.restore();
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * subT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(subLabel, cx, subY + 18 + (1 - subT) * 18);
+              ctx.restore();
+            }
+          }
+
+          // 2. Surlignage Marqueur (Highlight façon Vox / Documentaire)
+          else if (anim === 'marker-highlight') {
+            const textT = easeOutQuint(clamp(localTime / 0.52, 0, 1));
+            const markT = easeOutExpo(clamp((localTime - 0.22) / 0.58, 0, 1));
+            const topT = easeOutExpo(clamp((localTime - 0.10) / 0.50, 0, 1));
+            const subT = easeOutQuint(clamp((localTime - 0.35) / 0.50, 0, 1));
+
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            const textW = ctx.measureText(mainLabel).width;
+            const padX = 34;
+            const padY = 16;
+            const fullBoxW = textW + padX * 2;
+            const boxH = fontSize + padY * 2;
+            const curW = fullBoxW * markT * (1 - easeOut);
+
+            if (topLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * topT;
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 2.5, topY - 12);
+              ctx.restore();
+            }
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            ctx.fillStyle = accentColor;
+            applyTextShadow(useShadow);
+            drawRoundedRect(ctx, cx - fullBoxW / 2, cy - boxH / 2, curW, boxH, 16);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * textT;
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = accentColor.toUpperCase() === '#FFFFFF' ? '#09090B' : '#FFFFFF';
+            ctx.fillText(mainLabel, cx, cy + (1 - textT) * 16);
+            ctx.restore();
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * subT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(subLabel, cx, subY + 20);
+              ctx.restore();
+            }
+          }
+
+          // 3. Mot par Mot (Reels / TikTok)
+          else if (anim === 'word-pop') {
+            const topT = easeOutExpo(clamp(localTime / 0.45, 0, 1));
+            const subT = easeOutQuint(clamp((localTime - 0.35) / 0.45, 0, 1));
+
+            if (topLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * topT;
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 2.5, topY);
+              ctx.restore();
+            }
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha;
+            applyTextShadow(useShadow);
+            drawWordPopLine(mainLabel, cx, cy - easeOut * 20, 0.08, localTime, fontSize, primaryColor, true);
+            ctx.restore();
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * subT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(subLabel, cx, subY);
+              ctx.restore();
+            }
+          }
+
+          // 4. Zoom Impact (Punch)
+          else if (anim === 'zoom-impact') {
+            const popT = easeOutBack(clamp(localTime / 0.58, 0, 1));
+            const fadeT = easeOutExpo(clamp(localTime / 0.40, 0, 1));
+            const subT = easeOutQuint(clamp((localTime - 0.25) / 0.50, 0, 1));
+            const scale = (0.76 + 0.24 * popT) + easeOut * 0.12;
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * fadeT;
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+            ctx.translate(-cx, -cy);
+
+            if (topLabel) {
+              ctx.save();
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 2.5, topY);
+              ctx.restore();
+            }
+
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(mainLabel, cx, cy);
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * subT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              ctx.fillText(subLabel, cx, subY);
+              ctx.restore();
+            }
+            ctx.restore();
+          }
+
+          // 5. Glitch & Flash Moderne
+          else if (anim === 'glitch-flash') {
+            const enterT = easeOutExpo(clamp(localTime / 0.45, 0, 1));
+            const isGlitching = localTime < 0.36 || exitRaw > 0.25;
+            const jitterX = isGlitching ? Math.sin(localTime * 95) * 14 * (1 - enterT * 0.6) : 0;
+
+            if (topLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * enterT;
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 2.5, topY);
+              ctx.restore();
+            }
+
+            ctx.save();
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+
+            if (isGlitching) {
+              ctx.globalAlpha = exitAlpha * 0.75;
+              ctx.fillStyle = '#06B6D4';
+              ctx.fillText(mainLabel, cx - jitterX * 1.4, cy - 3);
+              ctx.fillStyle = accentColor;
+              ctx.fillText(mainLabel, cx + jitterX * 1.4, cy + 3);
+            }
+
+            ctx.globalAlpha = exitAlpha * clamp(enterT * 1.5, 0, 1);
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(mainLabel, cx + jitterX * 0.3, cy);
+            ctx.restore();
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * enterT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              ctx.fillText(subLabel, cx, subY);
+              ctx.restore();
+            }
+          }
+
+          // 6. Écartement Cinéma
+          else if (anim === 'cinema-tracking') {
+            const trackT = easeOutExpo(clamp(localTime / 0.85, 0, 1));
+            const subT = easeOutQuint(clamp((localTime - 0.30) / 0.55, 0, 1));
+            const spacing = (1 - trackT) * 44 + easeOut * 20;
+
+            if (topLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * trackT;
+              ctx.font = `700 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = `${6 + (1 - trackT) * 14}px`;
+              ctx.fillStyle = accentColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(topLabel, cx + 4, topY);
+              ctx.restore();
+            }
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * clamp(trackT * 1.5, 0, 1);
+            ctx.font = `800 ${fontSize}px ${fontStack}`;
+            if ('letterSpacing' in ctx) ctx.letterSpacing = `${spacing}px`;
+            ctx.fillStyle = primaryColor;
+            applyTextShadow(useShadow);
+            ctx.fillText(mainLabel, cx + spacing * 0.45, cy);
+            ctx.restore();
+
+            if (subLabel) {
+              ctx.save();
+              ctx.globalAlpha = exitAlpha * subT;
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              applyTextShadow(useShadow);
+              ctx.fillText(subLabel, cx, subY);
+              ctx.restore();
+            }
+          }
+
+          // 7. Carton Encadré
+          else if (anim === 'framed-box') {
+            const frameT = easeOutExpo(clamp(localTime / 0.62, 0, 1));
+            const textT = easeOutQuint(clamp((localTime - 0.18) / 0.58, 0, 1));
+
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            const textW = ctx.measureText(mainLabel).width;
+            const boxW = Math.min(W * 0.90, Math.max(textW + 130, 420));
+            const boxH = fontSize + (topLabel ? 130 : 88) + (subLabel ? 55 : 0);
+
+            ctx.save();
+            ctx.globalAlpha = exitAlpha * frameT;
+            drawRoundedRect(ctx, cx - boxW / 2, cy - boxH / 2, boxW, boxH, 24);
+            ctx.fillStyle = 'rgba(11, 13, 20, 0.86)';
+            ctx.fill();
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.globalAlpha = exitAlpha * textT;
+            const mainOffsetY = topLabel ? (subLabel ? 6 : 16) : (subLabel ? -14 : 0);
+
+            if (topLabel) {
+              ctx.save();
+              ctx.font = `800 ${topFontSize}px ${FONT_STACKS['Inter']}`;
+              if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
+              ctx.fillStyle = accentColor;
+              ctx.fillText(topLabel, cx + 2.5, cy - boxH / 2 + 44);
+              ctx.restore();
+            }
+
+            ctx.font = `900 ${fontSize}px ${fontStack}`;
+            ctx.fillStyle = primaryColor;
+            ctx.fillText(mainLabel, cx, cy + mainOffsetY + (1 - textT) * 18);
+
+            if (subLabel) {
+              ctx.font = `500 ${subFontSize}px ${fontStack}`;
+              ctx.fillStyle = subColor;
+              ctx.fillText(subLabel, cx, cy + boxH / 2 - 42);
+            }
+
+            ctx.restore();
+          }
+
+          ctx.restore();
+
+          if (state.media.position !== 'center-watermark') {
+            drawLogo(localTime, segDur, {
+              topY: topLabel ? (topY - topFontSize) : (cy - fontSize * 0.65),
+              badgeLeftX: cx - 180,
+              badgeY: topY
+            });
+          }
+        }
+
+        /**
+         * =====================================================================
+         * RENDU ONGLET 3 : SYNTHÉS INTERVENANTS (LOWER THIRDS — 4 ANIMATIONS)
+         * =====================================================================
+         */
+        function drawLowerThird(safeTime) {
+          const W = canvas.width;
+          const H = canvas.height;
+          const isVertical = state.global.ratio === '9:16';
+          const fontStack = getFontStack(state.global.fontFamily);
+
+          const speaker = state.lowerThird.speakers[state.lowerThird.selectedIndex] || {
+            name: 'Intervenant',
+            role: 'Fonction'
+          };
+          const nameText = applyCasing(speaker.name.trim() || 'Intervenant');
+          const roleText = applyCasing(speaker.role.trim());
+
+          const totalDur = state.lowerThird.duration;
+          const enterDur = Math.min(0.75, totalDur * 0.25);
+          const exitDur = Math.min(0.65, totalDur * 0.22);
+          const exitStart = totalDur - exitDur;
+
+          const enterRaw = clamp(safeTime / enterDur, 0, 1);
+          const exitRaw = safeTime > exitStart ? clamp((safeTime - exitStart) / exitDur, 0, 1) : 0;
+
+          const easeIn = easeOutExpo(enterRaw);
+          const easeOut = easeInCubic(exitRaw);
+          const visibility = easeIn * (1 - easeOut);
+
+          if (state.media.position === 'center-watermark') {
+            drawLogo(safeTime, totalDur);
+          }
+
+          if (visibility <= 0.001) return;
+
+          const scaleFactor = Math.min(1.25, Math.max(0.8, state.global.fontScale));
+          const nameSize = Math.round((isVertical ? 50 : 52) * scaleFactor);
+          const roleSize = Math.round((isVertical ? 29 : 31) * scaleFactor);
+
+          ctx.font = `800 ${nameSize}px ${fontStack}`;
+          const nameW = ctx.measureText(nameText).width;
+
+          ctx.font = `500 ${roleSize}px ${FONT_STACKS['Inter']}`;
+          const roleW = roleText ? ctx.measureText(roleText).width : 0;
+
+          const accentBarW = isVertical ? 14 : 16;
+          const padInner = isVertical ? 34 : 40;
+          const padOuter = isVertical ? 44 : 54;
+          const padY = isVertical ? 28 : 30;
+          const lineGap = roleText ? 13 : 0;
+
+          const contentW = Math.max(nameW, roleW);
+          const maxBoxW = W * (isVertical ? 0.88 : 0.78);
+          const boxW = Math.min(maxBoxW, accentBarW + padInner + contentW + padOuter);
+          const boxH = padY * 2 + nameSize + lineGap + (roleText ? roleSize : 0);
+          const radius = 20;
+
+          const pos = state.lowerThird.position;
+          const isRight = pos === 'bottom-right';
+          const isCenter = pos === 'bottom-center';
+
+          const marginX = isVertical ? (W - boxW) / 2 : 105;
+          const marginBottom = isVertical ? 250 : 100;
+
+          let targetX = marginX;
+          if (isCenter) {
+            targetX = (W - boxW) / 2;
+          } else if (isRight) {
+            targetX = isVertical ? (W - boxW) / 2 : (W - marginX - boxW);
+          }
+          const targetY = H - marginBottom - boxH;
+
+          const cardStyle = state.lowerThird.cardStyle;
+          const accent = state.global.accentColor;
+
+          let bgFill = 'rgba(13, 16, 25, 0.92)';
+          let borderStroke = 'rgba(255, 255, 255, 0.14)';
+          let nameColor = '#FFFFFF';
+          let roleColor = '#CBD5E1';
+          let barColor = accent;
+
+          if (cardStyle === 'editorial-white') {
+            bgFill = 'rgba(255, 255, 255, 0.96)';
+            borderStroke = 'rgba(15, 23, 42, 0.12)';
+            nameColor = '#09090B';
+            roleColor = '#475569';
+            barColor = accent;
+          } else if (cardStyle === 'rose-signature') {
+            bgFill = hexToRgba(accent, 0.95);
+            borderStroke = 'rgba(255, 255, 255, 0.35)';
+            const isWhite = accent.toUpperCase() === '#FFFFFF';
+            nameColor = isWhite ? '#09090B' : '#FFFFFF';
+            roleColor = isWhite ? '#334155' : 'rgba(255, 255, 255, 0.90)';
+            barColor = isWhite ? '#09090B' : '#FFFFFF';
+          }
+
+          const anim = state.lowerThird.animStyle;
+          ctx.save();
+
+          // Animation 4 : Pop Élastique
+          if (anim === 'elastic-pop') {
+            const popScale = easeOutBack(enterRaw) * (1 - easeOut * 0.15);
+            ctx.globalAlpha = visibility;
+            const cxBox = targetX + boxW / 2;
+            const cyBox = targetY + boxH / 2 + (1 - easeIn) * 40 + easeOut * 30;
+            ctx.translate(cxBox, cyBox);
+            ctx.scale(popScale, popScale);
+            ctx.translate(-boxW / 2, -boxH / 2);
+
+            drawRoundedRect(ctx, 0, 0, boxW, boxH, radius);
+            ctx.fillStyle = bgFill;
+            ctx.fill();
+            ctx.strokeStyle = borderStroke;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.save();
+            drawRoundedRect(ctx, 0, 0, boxW, boxH, radius);
+            ctx.clip();
+            ctx.fillStyle = barColor;
+            ctx.fillRect(isRight ? (boxW - accentBarW) : 0, 0, accentBarW, boxH);
+            ctx.restore();
+
+            ctx.textAlign = isRight ? 'right' : 'left';
+            const anchorX = isRight ? (boxW - accentBarW - padInner) : (accentBarW + padInner);
+            const nameY = padY + nameSize * 0.82;
+            ctx.fillStyle = nameColor;
+            ctx.font = `800 ${nameSize}px ${fontStack}`;
+            ctx.fillText(nameText, anchorX, nameY);
+
+            if (roleText) {
+              ctx.fillStyle = roleColor;
+              ctx.font = `500 ${roleSize}px ${FONT_STACKS['Inter']}`;
+              ctx.fillText(roleText, anchorX, nameY + lineGap + roleSize * 0.88);
+            }
+          }
+          // Animation 2 : Rideau Masqué (Ouverture verticale)
+          else if (anim === 'curtain-mask') {
+            const curH = boxH * visibility;
+            const curY = targetY + (boxH - curH) / 2;
+
+            drawRoundedRect(ctx, targetX, curY, boxW, curH, radius);
+            ctx.clip();
+
+            ctx.fillStyle = bgFill;
+            ctx.fillRect(targetX, targetY, boxW, boxH);
+            ctx.strokeStyle = borderStroke;
+            ctx.lineWidth = 3;
+            drawRoundedRect(ctx, targetX, curY, boxW, curH, radius);
+            ctx.stroke();
+
+            ctx.fillStyle = barColor;
+            ctx.fillRect(isRight ? (targetX + boxW - accentBarW) : targetX, targetY, accentBarW, boxH);
+
+            ctx.textAlign = isRight ? 'right' : 'left';
+            const anchorX = isRight ? (targetX + boxW - accentBarW - padInner) : (targetX + accentBarW + padInner);
+            const nameY = targetY + padY + nameSize * 0.82;
+            ctx.fillStyle = nameColor;
+            ctx.font = `800 ${nameSize}px ${fontStack}`;
+            ctx.fillText(nameText, anchorX, nameY);
+
+            if (roleText) {
+              ctx.fillStyle = roleColor;
+              ctx.font = `500 ${roleSize}px ${FONT_STACKS['Inter']}`;
+              ctx.fillText(roleText, anchorX, nameY + lineGap + roleSize * 0.88);
+            }
+          }
+          // Animation 3 : Expansion Ligne (Tracé séparateur central)
+          else if (anim === 'line-expand') {
+            const lineW = (boxW - 60) * visibility;
+            const lineX = isRight ? (targetX + boxW - 30 - lineW) : (targetX + 30);
+            const midY = targetY + padY + nameSize + lineGap * 0.5;
+
+            ctx.globalAlpha = visibility;
+            drawRoundedRect(ctx, targetX, targetY, boxW, boxH, radius);
+            ctx.fillStyle = bgFill;
+            ctx.fill();
+            ctx.strokeStyle = borderStroke;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = barColor;
+            ctx.fillRect(lineX, midY - 2, lineW, 4);
+
+            ctx.textAlign = isRight ? 'right' : 'left';
+            const anchorX = isRight ? (targetX + boxW - 36) : (targetX + 36);
+            const nameY = targetY + padY + nameSize * 0.82;
+
+            ctx.fillStyle = nameColor;
+            ctx.font = `800 ${nameSize}px ${fontStack}`;
+            ctx.fillText(nameText, anchorX, nameY - (1 - easeIn) * 18);
+
+            if (roleText) {
+              ctx.fillStyle = roleColor;
+              ctx.font = `500 ${roleSize}px ${FONT_STACKS['Inter']}`;
+              ctx.fillText(roleText, anchorX, nameY + lineGap + roleSize * 0.88 + (1 - easeIn) * 18);
+            }
+          }
+          // Animation 1 (Défaut) : Tiroir Latéral Fluide
+          else {
+            const barScaleY = clamp(enterRaw / 0.35, 0, 1) * (1 - clamp((exitRaw - 0.65) / 0.35, 0, 1));
+            const revealT = easeOutExpo(clamp((enterRaw - 0.14) / 0.86, 0, 1)) *
+                            (1 - easeInCubic(clamp(exitRaw / 0.78, 0, 1)));
+
+            const currentBoxW = accentBarW + (boxW - accentBarW) * revealT;
+            const revealX = isRight ? (targetX + boxW - currentBoxW) : targetX;
+
+            ctx.save();
+            ctx.globalAlpha = visibility;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+            ctx.shadowBlur = 28;
+            ctx.shadowOffsetY = 10;
+            drawRoundedRect(ctx, revealX, targetY, currentBoxW, boxH, radius);
+            ctx.fillStyle = bgFill;
+            ctx.fill();
+            ctx.restore();
+
+            drawRoundedRect(ctx, revealX, targetY, currentBoxW, boxH, radius);
+            ctx.clip();
+
+            ctx.fillStyle = bgFill;
+            ctx.fillRect(targetX, targetY, boxW, boxH);
+
+            ctx.strokeStyle = borderStroke;
+            ctx.lineWidth = 3;
+            drawRoundedRect(ctx, revealX, targetY, currentBoxW, boxH, radius);
+            ctx.stroke();
+
+            const slideShift = isRight ? (1 - revealT) * 42 : (1 - revealT) * -42;
+            const textAlpha = clamp((revealT - 0.18) / 0.82, 0, 1);
+
+            ctx.globalAlpha = textAlpha;
+            ctx.textAlign = isRight ? 'right' : 'left';
+            const anchorX = isRight
+              ? (targetX + boxW - accentBarW - padInner + slideShift)
+              : (targetX + accentBarW + padInner + slideShift);
+
+            const nameY = targetY + padY + nameSize * 0.82;
+            ctx.fillStyle = nameColor;
+            ctx.font = `800 ${nameSize}px ${fontStack}`;
+            ctx.fillText(nameText, anchorX, nameY);
+
+            if (roleText) {
+              const roleY = nameY + lineGap + roleSize * 0.88;
+              ctx.fillStyle = roleColor;
+              ctx.font = `500 ${roleSize}px ${FONT_STACKS['Inter']}`;
+              ctx.fillText(roleText, anchorX, roleY);
+            }
+
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = barColor;
+            const barH = boxH * barScaleY;
+            const barY = targetY + (boxH - barH) / 2;
+            const barX = isRight ? (targetX + boxW - accentBarW) : targetX;
+            ctx.fillRect(barX, barY, accentBarW, barH);
+          }
+
+          ctx.restore();
+
+          if (state.media.position !== 'center-watermark') {
+            drawLogo(safeTime, totalDur, {
+              topY: targetY,
+              badgeLeftX: targetX,
+              badgeY: targetY + boxH / 2
+            });
+          }
+        }
+
+        /**
+         * Rendu complet d'une image à l'instant T
+         */
+        function renderFrame(timeInLoop, isExport = false) {
+          const totalDur = getTotalDuration();
+          const safeTime = clamp(timeInLoop, 0, Math.max(0.001, totalDur - 0.0001));
+
+          if (!isExport) {
+            currentTimeLabel.textContent = formatTimecode(safeTime);
+            timelineFill.style.width = `${(safeTime / totalDur) * 100}%`;
+          }
+
+          drawBackground(safeTime, totalDur);
+
+          if (state.activeTab === 'intro') {
+            drawIntro(safeTime);
+          } else if (state.activeTab === 'chapter') {
+            drawChapter(safeTime);
+          } else {
+            drawLowerThird(safeTime);
+          }
+        }
+
+        /**
+         * Boucle principale 60 FPS
+         */
+        function mainLoop(timestamp) {
+          if (!state.playback.lastTimestamp) {
+            state.playback.lastTimestamp = timestamp;
+          }
+          const dt = Math.min(0.1, (timestamp - state.playback.lastTimestamp) / 1000);
+          state.playback.lastTimestamp = timestamp;
+
+          if (state.playback.isPlaying && !state.playback.isRecording) {
+            const total = getTotalDuration();
+            state.playback.elapsed += dt;
+            if (state.playback.elapsed >= total) {
+              state.playback.elapsed = state.playback.elapsed % total;
+            }
+          }
+
+          if (!state.playback.isRecording) {
+            renderFrame(state.playback.elapsed, false);
+          }
+
+          requestAnimationFrame(mainLoop);
+        }
+
+        /**
+         * =====================================================================
+         * EXPORTATION VIDÉO HD 60 FPS (.WEBM AVEC CANAL ALPHA)
+         * =====================================================================
+         */
+        async function exportVideo() {
+          if (state.playback.isRecording) return;
+
+          if (typeof MediaRecorder === 'undefined' || !canvas.captureStream) {
+            showToast("Ton navigateur ne supporte pas l'export vidéo direct.", true);
+            return;
+          }
+
+          state.playback.isRecording = true;
+          btnExportVideo.disabled = true;
+          btnExportVideo.classList.add('opacity-60', 'cursor-not-allowed');
+          exportBtnText.textContent = 'Enregistrement en cours...';
+          recordingOverlay.classList.remove('hidden');
+          recordingProgressFill.style.width = '0%';
+          recordingProgressText.textContent = '0%';
+
+          try {
+            const fps = 60;
+            const stream = canvas.captureStream(fps);
+            const mimeTypes = [
+              'video/webm;codecs=vp9',
+              'video/webm;codecs=vp8',
+              'video/webm'
+            ];
+            const selectedMime = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+            const recorderOptions = { videoBitsPerSecond: 10000000 };
+            if (selectedMime) {
+              recorderOptions.mimeType = selectedMime;
+            }
+            const recorder = new MediaRecorder(stream, recorderOptions);
+
+            const chunks = [];
+            recorder.ondataavailable = (e) => {
+              if (e.data && e.data.size > 0) chunks.push(e.data);
+            };
+
+            recorder.onstop = () => {
+              const blob = new Blob(chunks, { type: selectedMime || 'video/webm' });
+              const url = URL.createObjectURL(blob);
+              const filename = getSmartFilename();
+
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+
+              state.playback.isRecording = false;
+              state.playback.elapsed = 0;
+              state.playback.lastTimestamp = performance.now();
+              btnExportVideo.disabled = false;
+              btnExportVideo.classList.remove('opacity-60', 'cursor-not-allowed');
+              exportBtnText.textContent = 'Exporter la vidéo (.webm)';
+              recordingOverlay.classList.add('hidden');
+              showToast(`Vidéo téléchargée : ${filename}`);
+            };
+
+            const totalDur = getTotalDuration();
+            const totalFrames = Math.ceil(totalDur * fps);
+            let frame = 0;
+
+            recorder.start();
+
+            const renderNextFrame = () => {
+              if (frame <= totalFrames) {
+                renderFrame(frame / fps, true);
+                const pct = Math.min(100, Math.round((frame / totalFrames) * 100));
+                recordingProgressFill.style.width = `${pct}%`;
+                recordingProgressText.textContent = `${pct}%`;
+                frame++;
+                setTimeout(renderNextFrame, 1000 / fps);
+              } else {
+                recorder.stop();
+              }
+            };
+
+            renderNextFrame();
+          } catch (err) {
+            console.error(err);
+            state.playback.isRecording = false;
+            btnExportVideo.disabled = false;
+            btnExportVideo.classList.remove('opacity-60', 'cursor-not-allowed');
+            exportBtnText.textContent = 'Exporter la vidéo (.webm)';
+            recordingOverlay.classList.add('hidden');
+            showToast("Erreur lors de l'exportation vidéo.", true);
+          }
+        }
+
+        /**
+         * =====================================================================
+         * ÉCOUTEURS D'ÉVÉNEMENTS UI
+         * =====================================================================
+         */
+        const tabButtons = {
+          intro: document.getElementById('tabBtnIntro'),
+          chapter: document.getElementById('tabBtnChapter'),
+          'lower-third': document.getElementById('tabBtnLowerThird')
+        };
+        const tabPanels = {
+          intro: document.getElementById('panelIntro'),
+          chapter: document.getElementById('panelChapter'),
+          'lower-third': document.getElementById('panelLowerThird')
+        };
+        const tabTitles = {
+          intro: 'Module : Titre & Intro',
+          chapter: 'Module : Intertitres & Chapitres',
+          'lower-third': 'Module : Synthé Intervenant'
+        };
+
+        function switchTab(tabKey) {
+          state.activeTab = tabKey;
+          state.playback.elapsed = 0;
+
+          Object.keys(tabButtons).forEach(key => {
+            const btn = tabButtons[key];
+            const panel = tabPanels[key];
+            if (key === tabKey) {
+              btn.className = 'main-tab-btn py-2 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all bg-pink-600 text-white shadow-md shadow-pink-600/20 cursor-pointer';
+              btn.setAttribute('aria-selected', 'true');
+              panel.classList.remove('hidden');
+            } else {
+              btn.className = 'main-tab-btn py-2 px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all text-slate-400 hover:text-white cursor-pointer';
+              btn.setAttribute('aria-selected', 'false');
+              panel.classList.add('hidden');
+            }
+          });
+
+          activeModuleLabel.textContent = tabTitles[tabKey];
+          updateMetadataUI();
+        }
+
+        tabButtons.intro.addEventListener('click', () => switchTab('intro'));
+        tabButtons.chapter.addEventListener('click', () => switchTab('chapter'));
+        tabButtons['lower-third'].addEventListener('click', () => switchTab('lower-third'));
+
+        // --- Onglet 1 : Titre & Intro ---
+        const introLine1Input = document.getElementById('introLine1Input');
+        const introLine2Input = document.getElementById('introLine2Input');
+        const toggleIntroBadge = document.getElementById('toggleIntroBadge');
+        const introBadgeInput = document.getElementById('introBadgeInput');
+        const introDurationRange = document.getElementById('introDurationRange');
+        const introDurationVal = document.getElementById('introDurationVal');
+
+        introLine1Input.addEventListener('input', (e) => {
+          state.intro.line1 = e.target.value;
+          updateMetadataUI();
+        });
+        introLine2Input.addEventListener('input', (e) => {
+          state.intro.line2 = e.target.value;
+          updateMetadataUI();
+        });
+
+        document.getElementById('btnResetIntro').addEventListener('click', () => {
+          state.intro.line1 = 'Un mot,';
+          state.intro.line2 = 'Deux réponses';
+          state.intro.badgeText = 'SIESTIFY • ENTRETIEN CROISÉ';
+          state.intro.showBadge = true;
+          introLine1Input.value = state.intro.line1;
+          introLine2Input.value = state.intro.line2;
+          introBadgeInput.value = state.intro.badgeText;
+          toggleIntroBadge.checked = true;
+          introBadgeInput.disabled = false;
+          introBadgeInput.classList.remove('opacity-40');
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        toggleIntroBadge.addEventListener('change', (e) => {
+          state.intro.showBadge = e.target.checked;
+          introBadgeInput.disabled = !state.intro.showBadge;
+          introBadgeInput.classList.toggle('opacity-40', !state.intro.showBadge);
+        });
+
+        introBadgeInput.addEventListener('input', (e) => {
+          state.intro.badgeText = e.target.value;
+        });
+
+        document.querySelectorAll('.intro-anim-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.intro-anim-btn').forEach(b => {
+              b.classList.remove('border-pink-500', 'bg-pink-500/10');
+              b.classList.add('border-slate-800', 'bg-[#080a0f]');
+            });
+            btn.classList.add('border-pink-500', 'bg-pink-500/10');
+            btn.classList.remove('border-slate-800', 'bg-[#080a0f]');
+            state.intro.animStyle = btn.dataset.introanim;
+            state.playback.elapsed = 0;
+          });
+        });
+
+        introDurationRange.addEventListener('input', (e) => {
+          state.intro.duration = parseFloat(e.target.value);
+          introDurationVal.textContent = `${state.intro.duration.toFixed(1)}s`;
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        // --- Onglet 2 : Chapitres ---
+        const toggleChapterSequence = document.getElementById('toggleChapterSequence');
+        const chapterSingleBox = document.getElementById('chapterSingleBox');
+        const chapterSequenceBox = document.getElementById('chapterSequenceBox');
+        const chTopInput = document.getElementById('chTopInput');
+        const chMainInput = document.getElementById('chMainInput');
+        const chSubInput = document.getElementById('chSubInput');
+        const chSequenceInput = document.getElementById('chSequenceInput');
+        const chDurationRange = document.getElementById('chDurationRange');
+        const chDurationVal = document.getElementById('chDurationVal');
+
+        toggleChapterSequence.addEventListener('change', (e) => {
+          state.chapter.sequenceMode = e.target.checked;
+          chapterSingleBox.classList.toggle('hidden', state.chapter.sequenceMode);
+          chapterSequenceBox.classList.toggle('hidden', !state.chapter.sequenceMode);
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        document.querySelectorAll('.ch-preset-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.chapter.topText = btn.dataset.chTop;
+            state.chapter.mainText = btn.dataset.chMain;
+            state.chapter.subText = btn.dataset.chSub;
+            chTopInput.value = state.chapter.topText;
+            chMainInput.value = state.chapter.mainText;
+            chSubInput.value = state.chapter.subText;
+            state.playback.elapsed = 0;
+            updateMetadataUI();
+          });
+        });
+
+        chTopInput.addEventListener('input', (e) => { state.chapter.topText = e.target.value; });
+        chMainInput.addEventListener('input', (e) => {
+          state.chapter.mainText = e.target.value;
+          updateMetadataUI();
+        });
+        chSubInput.addEventListener('input', (e) => { state.chapter.subText = e.target.value; });
+
+        chSequenceInput.addEventListener('input', (e) => {
+          state.chapter.sequenceLines = e.target.value;
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        document.getElementById('btnLoadChapterSeqExample').addEventListener('click', () => {
+          state.chapter.sequenceLines = 'CHAPITRE 01 | Manche 1\nCHAPITRE 02 | Vrai ou Faux\nCHAPITRE 03 | Premièrement';
+          chSequenceInput.value = state.chapter.sequenceLines;
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        document.querySelectorAll('.ch-anim-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.ch-anim-btn').forEach(b => {
+              b.classList.remove('border-pink-500', 'bg-pink-500/10');
+              b.classList.add('border-slate-800', 'bg-[#080a0f]');
+            });
+            btn.classList.add('border-pink-500', 'bg-pink-500/10');
+            btn.classList.remove('border-slate-800', 'bg-[#080a0f]');
+            state.chapter.animStyle = btn.dataset.chanim;
+            state.playback.elapsed = 0;
+          });
+        });
+
+        chDurationRange.addEventListener('input', (e) => {
+          state.chapter.durationPerSlide = parseFloat(e.target.value);
+          chDurationVal.textContent = `${state.chapter.durationPerSlide.toFixed(1)}s`;
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        // --- Onglet 3 : Synthés ---
+        const speakersList = document.getElementById('speakersList');
+        const ltNameInput = document.getElementById('ltNameInput');
+        const ltRoleInput = document.getElementById('ltRoleInput');
+        const ltDurationRange = document.getElementById('ltDurationRange');
+        const ltDurationVal = document.getElementById('ltDurationVal');
+
+        function renderSpeakersList() {
+          speakersList.innerHTML = '';
+          state.lowerThird.speakers.forEach((sp, idx) => {
+            const active = idx === state.lowerThird.selectedIndex;
+            const card = document.createElement('div');
+            card.className = `p-2 rounded-xl border transition flex items-center justify-between gap-2 cursor-pointer ${
+              active
+                ? 'border-pink-500 bg-pink-500/10'
+                : 'border-slate-800 bg-[#080a0f] hover:border-slate-700'
+            }`;
+
+            const textWrap = document.createElement('div');
+            textWrap.className = 'overflow-hidden flex-1';
+            textWrap.innerHTML = `
+              <div class="text-xs font-bold text-white truncate">${sp.name || 'Sans nom'}</div>
+              <div class="text-[10px] text-slate-400 truncate">${sp.role || 'Fonction'}</div>
+            `;
+
+            card.addEventListener('click', () => {
+              state.lowerThird.selectedIndex = idx;
+              ltNameInput.value = sp.name;
+              ltRoleInput.value = sp.role;
+              state.playback.elapsed = 0;
+              renderSpeakersList();
+              updateMetadataUI();
+            });
+
+            card.appendChild(textWrap);
+
+            if (state.lowerThird.speakers.length > 1) {
+              const del = document.createElement('button');
+              del.type = 'button';
+              del.className = 'p-1 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition';
+              del.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+              del.addEventListener('click', (e) => {
+                e.stopPropagation();
+                state.lowerThird.speakers.splice(idx, 1);
+                if (state.lowerThird.selectedIndex >= state.lowerThird.speakers.length) {
+                  state.lowerThird.selectedIndex = state.lowerThird.speakers.length - 1;
+                }
+                const cur = state.lowerThird.speakers[state.lowerThird.selectedIndex];
+                ltNameInput.value = cur.name;
+                ltRoleInput.value = cur.role;
+                renderSpeakersList();
+                updateMetadataUI();
+              });
+              card.appendChild(del);
+            }
+
+            speakersList.appendChild(card);
+          });
+        }
+
+        document.getElementById('btnAddSpeaker').addEventListener('click', () => {
+          state.lowerThird.speakers.push({
+            name: 'Nouvel Intervenant',
+            role: 'Titre • Entreprise'
+          });
+          state.lowerThird.selectedIndex = state.lowerThird.speakers.length - 1;
+          const cur = state.lowerThird.speakers[state.lowerThird.selectedIndex];
+          ltNameInput.value = cur.name;
+          ltRoleInput.value = cur.role;
+          state.playback.elapsed = 0;
+          renderSpeakersList();
+          updateMetadataUI();
+        });
+
+        ltNameInput.addEventListener('input', (e) => {
+          const sp = state.lowerThird.speakers[state.lowerThird.selectedIndex];
+          if (sp) {
+            sp.name = e.target.value;
+            renderSpeakersList();
+            updateMetadataUI();
+          }
+        });
+
+        ltRoleInput.addEventListener('input', (e) => {
+          const sp = state.lowerThird.speakers[state.lowerThird.selectedIndex];
+          if (sp) {
+            sp.role = e.target.value;
+            renderSpeakersList();
+          }
+        });
+
+        document.querySelectorAll('.lt-pos-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.lt-pos-btn').forEach(b => {
+              b.classList.remove('bg-pink-600', 'text-white', 'shadow');
+              b.classList.add('text-slate-400');
+            });
+            btn.classList.add('bg-pink-600', 'text-white', 'shadow');
+            btn.classList.remove('text-slate-400');
+            state.lowerThird.position = btn.dataset.ltpos;
+            state.playback.elapsed = 0;
+          });
+        });
+
+        document.querySelectorAll('.lt-style-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.lt-style-btn').forEach(b => {
+              b.classList.remove('border-pink-500', 'bg-pink-500/10');
+              b.classList.add('border-slate-800', 'bg-[#080a0f]');
+            });
+            btn.classList.add('border-pink-500', 'bg-pink-500/10');
+            btn.classList.remove('border-slate-800', 'bg-[#080a0f]');
+            state.lowerThird.cardStyle = btn.dataset.ltstyle;
+          });
+        });
+
+        document.querySelectorAll('.lt-anim-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.lt-anim-btn').forEach(b => {
+              b.classList.remove('border-pink-500', 'bg-pink-500/10');
+              b.classList.add('border-slate-800', 'bg-[#080a0f]');
+            });
+            btn.classList.add('border-pink-500', 'bg-pink-500/10');
+            btn.classList.remove('border-slate-800', 'bg-[#080a0f]');
+            state.lowerThird.animStyle = btn.dataset.ltanim;
+            state.playback.elapsed = 0;
+          });
+        });
+
+        ltDurationRange.addEventListener('input', (e) => {
+          state.lowerThird.duration = parseFloat(e.target.value);
+          ltDurationVal.textContent = `${state.lowerThird.duration.toFixed(1)}s`;
+          state.playback.elapsed = 0;
+          updateMetadataUI();
+        });
+
+        // --- Section 4 : Police & Casse du Texte ---
+        const globalFontSelect = document.getElementById('globalFontSelect');
+        const fontScaleRange = document.getElementById('fontScaleRange');
+        const fontScaleVal = document.getElementById('fontScaleVal');
+
+        globalFontSelect.addEventListener('change', (e) => {
+          state.global.fontFamily = e.target.value;
+        });
+
+        document.querySelectorAll('.text-case-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.text-case-btn').forEach(b => {
+              b.classList.remove('bg-pink-600', 'text-white', 'shadow');
+              b.classList.add('text-slate-400');
+            });
+            btn.classList.add('bg-pink-600', 'text-white', 'shadow');
+            btn.classList.remove('text-slate-400');
+            state.global.textCase = btn.dataset.textcase;
+          });
+        });
+
+        fontScaleRange.addEventListener('input', (e) => {
+          const pct = parseInt(e.target.value, 10);
+          state.global.fontScale = pct / 100;
+          fontScaleVal.textContent = `${pct}%`;
+        });
+
+        // --- Section 5 : Fond & Voile Noir Semi-Transparent ---
+        const veilOpacityRange = document.getElementById('veilOpacityRange');
+        const veilOpacityVal = document.getElementById('veilOpacityVal');
+        const btnQuickDarkVeil = document.getElementById('btnQuickDarkVeil');
+        const toggleVignette = document.getElementById('toggleVignette');
+
+        function syncVeilUI(pct) {
+          state.global.veilOpacity = pct / 100;
+          veilOpacityRange.value = pct;
+          veilOpacityVal.textContent = `${pct}%`;
+
+          if (pct > 0) {
+            btnQuickDarkVeil.textContent = 'Désactiver';
+            btnQuickDarkVeil.classList.add('border-pink-500', 'text-pink-300', 'bg-pink-500/15');
+            btnQuickDarkVeil.classList.remove('border-slate-700', 'text-slate-300', 'bg-[#090b10]');
+          } else {
+            btnQuickDarkVeil.textContent = 'Activer 45%';
+            btnQuickDarkVeil.classList.remove('border-pink-500', 'text-pink-300', 'bg-pink-500/15');
+            btnQuickDarkVeil.classList.add('border-slate-700', 'text-slate-300', 'bg-[#090b10]');
+          }
+
+          if (state.global.bgMode === 'veil' || (state.global.bgMode === 'transparent' && pct > 0)) {
+            bgModeLabel.textContent = `Transparent + Voile Noir (${pct}%)`;
+          } else {
+            bgModeLabel.textContent = BG_CONFIG[state.global.bgMode].label;
+          }
+        }
+
+        document.querySelectorAll('.bg-mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.bg-mode-btn').forEach(b => {
+              b.classList.remove('border-pink-500', 'bg-pink-500/15');
+              b.classList.add('border-slate-800', 'bg-[#131722]');
+            });
+            btn.classList.add('border-pink-500', 'bg-pink-500/15');
+            btn.classList.remove('border-slate-800', 'bg-[#131722]');
+
+            state.global.bgMode = btn.dataset.bg;
+            if (state.global.bgMode === 'veil' && state.global.veilOpacity === 0) {
+              syncVeilUI(45);
+            } else {
+              syncVeilUI(Math.round(state.global.veilOpacity * 100));
+            }
+          });
+        });
+
+        veilOpacityRange.addEventListener('input', (e) => {
+          syncVeilUI(parseInt(e.target.value, 10));
+        });
+
+        btnQuickDarkVeil.addEventListener('click', () => {
+          const isCurrentlyActive = state.global.veilOpacity > 0;
+          syncVeilUI(isCurrentlyActive ? 0 : 45);
+        });
+
+        toggleVignette.addEventListener('change', (e) => {
+          state.global.vignette = e.target.checked;
+        });
+
+        // --- Section 6 : Image / Logo & Animation ---
+        const mediaFileInput = document.getElementById('mediaFileInput');
+        const mediaFileNameLabel = document.getElementById('mediaFileNameLabel');
+        const mediaControlsBox = document.getElementById('mediaControlsBox');
+        const btnClearMedia = document.getElementById('btnClearMedia');
+        const mediaPosSelect = document.getElementById('mediaPosSelect');
+        const mediaAnimSelect = document.getElementById('mediaAnimSelect');
+        const mediaSizeRange = document.getElementById('mediaSizeRange');
+        const mediaSizeVal = document.getElementById('mediaSizeVal');
+        const mediaOpacityRange = document.getElementById('mediaOpacityRange');
+        const mediaOpacityVal = document.getElementById('mediaOpacityVal');
+
+        mediaFileInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              state.media.imageObj = img;
+              state.media.fileName = file.name;
+              mediaFileNameLabel.textContent = file.name;
+              mediaControlsBox.classList.remove('hidden');
+              btnClearMedia.classList.remove('hidden');
+              state.playback.elapsed = 0;
+              showToast(`Image importée : ${file.name}`);
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+
+        btnClearMedia.addEventListener('click', () => {
+          state.media.imageObj = null;
+          state.media.fileName = '';
+          mediaFileInput.value = '';
+          mediaFileNameLabel.textContent = 'Importer une image / logo (PNG, JPG, SVG)';
+          mediaControlsBox.classList.add('hidden');
+          btnClearMedia.classList.add('hidden');
+        });
+
+        mediaPosSelect.addEventListener('change', (e) => {
+          state.media.position = e.target.value;
+          state.playback.elapsed = 0;
+        });
+
+        mediaAnimSelect.addEventListener('change', (e) => {
+          state.media.animStyle = e.target.value;
+          state.playback.elapsed = 0;
+        });
+
+        mediaSizeRange.addEventListener('input', (e) => {
+          const pct = parseInt(e.target.value, 10);
+          state.media.sizeScale = pct / 100;
+          mediaSizeVal.textContent = `${pct}%`;
+        });
+
+        mediaOpacityRange.addEventListener('input', (e) => {
+          const pct = parseInt(e.target.value, 10);
+          state.media.opacity = pct / 100;
+          mediaOpacityVal.textContent = `${pct}%`;
+        });
+
+        // --- Section 7 : Couleurs (#HEX) & Format ---
+        const accentHexDisplay = document.getElementById('accentHexDisplay');
+        const freeAccentColorInput = document.getElementById('freeAccentColorInput');
+        const accentHexInput = document.getElementById('accentHexInput');
+        const accentHexPreviewDot = document.getElementById('accentHexPreviewDot');
+        const btnCopyAccentHex = document.getElementById('btnCopyAccentHex');
+
+        const freeTextColorInput = document.getElementById('freeTextColorInput');
+        const textHexInput = document.getElementById('textHexInput');
+        const textHexPreviewSwatch = document.getElementById('textHexPreviewSwatch');
+        const btnCopyTextHex = document.getElementById('btnCopyTextHex');
+
+        function normalizeHex(raw) {
+          if (!raw) return null;
+          let clean = raw.trim().replace(/^#/, '');
+          if (/^[0-9a-fA-F]{3}$/.test(clean)) {
+            clean = clean.split('').map(c => c + c).join('');
+          }
+          if (/^[0-9a-fA-F]{6}$/.test(clean)) {
+            return `#${clean.toUpperCase()}`;
+          }
+          return null;
+        }
+
+        function copyTextToClipboard(text, label) {
+          const tempInput = document.createElement('input');
+          tempInput.value = text;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          try {
+            document.execCommand('copy');
+            showToast(`Code copié : ${text} (${label})`);
+          } catch (err) {
+            showToast('Impossible de copier le code.', true);
+          }
+          document.body.removeChild(tempInput);
+        }
+
+        function setAccentColor(hex, activeBtn = null, updateTextField = true) {
+          const validHex = normalizeHex(hex);
+          if (!validHex) return;
+
+          state.global.accentColor = validHex;
+          accentHexDisplay.textContent = validHex;
+          freeAccentColorInput.value = validHex;
+          accentHexPreviewDot.style.backgroundColor = validHex;
+          if (updateTextField) {
+            accentHexInput.value = validHex;
+          }
+
+          document.querySelectorAll('.accent-swatch-btn').forEach(b => {
+            const isMatch = b === activeBtn || b.dataset.accent.toUpperCase() === validHex;
+            if (isMatch) {
+              b.classList.add('ring-2', 'ring-white', 'ring-offset-2', 'ring-offset-[#131722]');
+              b.classList.remove('opacity-85');
+            } else {
+              b.classList.remove('ring-2', 'ring-white', 'ring-offset-2', 'ring-offset-[#131722]');
+              b.classList.add('opacity-85');
+            }
+          });
+        }
+
+        function setPrimaryTextColor(hex, updateTextField = true) {
+          const validHex = normalizeHex(hex);
+          if (!validHex) return;
+
+          state.global.textColor = validHex;
+          freeTextColorInput.value = validHex;
+          textHexPreviewSwatch.style.backgroundColor = validHex;
+          if (updateTextField) {
+            textHexInput.value = validHex;
+          }
+        }
+
+        document.querySelectorAll('.accent-swatch-btn').forEach(btn => {
+          btn.addEventListener('click', () => setAccentColor(btn.dataset.accent, btn, true));
+        });
+
+        freeAccentColorInput.addEventListener('input', (e) => {
+          setAccentColor(e.target.value, null, true);
+        });
+
+        accentHexInput.addEventListener('input', (e) => {
+          const valid = normalizeHex(e.target.value);
+          if (valid) {
+            setAccentColor(valid, null, false);
+          }
+        });
+
+        accentHexInput.addEventListener('blur', () => {
+          accentHexInput.value = state.global.accentColor;
+        });
+
+        btnCopyAccentHex.addEventListener('click', () => {
+          copyTextToClipboard(state.global.accentColor, 'Accent');
+        });
+
+        document.querySelectorAll('.text-hex-preset').forEach(btn => {
+          btn.addEventListener('click', () => setPrimaryTextColor(btn.dataset.texthex, true));
+        });
+
+        freeTextColorInput.addEventListener('input', (e) => {
+          setPrimaryTextColor(e.target.value, true);
+        });
+
+        textHexInput.addEventListener('input', (e) => {
+          const valid = normalizeHex(e.target.value);
+          if (valid) {
+            setPrimaryTextColor(valid, false);
+          }
+        });
+
+        textHexInput.addEventListener('blur', () => {
+          textHexInput.value = state.global.textColor;
+        });
+
+        btnCopyTextHex.addEventListener('click', () => {
+          copyTextToClipboard(state.global.textColor, 'Texte');
+        });
+
+        document.querySelectorAll('.ratio-mode-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.ratio-mode-btn').forEach(b => {
+              b.classList.remove('bg-pink-600', 'text-white', 'shadow');
+              b.classList.add('bg-[#131722]', 'border', 'border-slate-800', 'text-slate-400');
+            });
+            btn.classList.add('bg-pink-600', 'text-white', 'shadow');
+            btn.classList.remove('bg-[#131722]', 'border', 'border-slate-800', 'text-slate-400');
+
+            state.global.ratio = btn.dataset.ratio;
+            updateCanvasResolution();
+          });
+        });
+
+        // --- Lecteur & Export ---
+        btnPlayPause.addEventListener('click', () => {
+          state.playback.isPlaying = !state.playback.isPlaying;
+          iconPause.classList.toggle('hidden', !state.playback.isPlaying);
+          iconPlay.classList.toggle('hidden', state.playback.isPlaying);
+          playPauseText.textContent = state.playback.isPlaying ? 'Pause' : 'Lecture';
+        });
+
+        btnReplay.addEventListener('click', () => {
+          state.playback.elapsed = 0;
+          state.playback.isPlaying = true;
+          iconPause.classList.remove('hidden');
+          iconPlay.classList.add('hidden');
+          playPauseText.textContent = 'Pause';
+        });
+
+        timelineTrack.addEventListener('click', (e) => {
+          const rect = timelineTrack.getBoundingClientRect();
+          const ratio = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+          state.playback.elapsed = ratio * getTotalDuration();
+          renderFrame(state.playback.elapsed, false);
+        });
+
+        btnExportVideo.addEventListener('click', exportVideo);
+        window.addEventListener('resize', fitCanvasToViewport);
+
+        // Démarrage immédiat du moteur 60 FPS
+        function initStudio() {
+          renderSpeakersList();
+          updateCanvasResolution();
+          renderFrame(0, false);
+          requestAnimationFrame(mainLoop);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initStudio);
+        } else {
+          initStudio();
+        }
+      } catch (err) {
+        showFatalError(err);
+      }
+    })();
+  </script>
+</body>
+</html>

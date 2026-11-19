@@ -1,0 +1,489 @@
+<title>Maquette DStudio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&family=Bebas+Neue&family=Playfair+Display:wght@700;900&family=Syne:wght@700;800&family=Space+Grotesk:wght@600;700&display=swap">
+<style>
+/* Layout : barre d'app en haut, vues routées par #hash ; l'éditeur = panneau d'étapes à gauche + scène vidéo à droite */
+:root {
+  --ink-0: #0f1116;      /* fond de l'app */
+  --ink-1: #161922;      /* panneaux */
+  --ink-2: #1e222d;      /* éléments surélevés */
+  --ink-3: #272c39;      /* survol */
+  --line: #2b303d;
+  --fg: #eceef4;
+  --muted: #959cae;
+  --dim: #6b7285;
+  --accent: #f2c14e;     /* jaune "tally" / repère de montage */
+  --accent-ink: #1d1604;
+  --accent-soft: rgba(242, 193, 78, .14);
+  --ok: #5fd39b;
+  --rec: #ff5d62;
+  --info: #7fb2ff;
+  --f-display: "Bricolage Grotesque", "Manrope", system-ui, sans-serif;
+  --f-ui: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --r: 10px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--ink-0); color: var(--fg); font: 14px/1.5 var(--f-ui); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- Bandeau maquette + barre d'app ---------- */
+.mock-banner { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 12px; text-align: center; padding-block: 5px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--ink-1); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink-1); }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 800; font-size: 18px; white-space: nowrap; }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 15px; }
+.nav { display: flex; gap: 4px; overflow-x: auto; min-width: 0; flex: 1; scrollbar-width: none; }
+.nav a { color: var(--muted); text-decoration: none; padding: 7px 12px; border-radius: 8px; white-space: nowrap; font-weight: 600; font-size: 13px; }
+.nav a:hover { color: var(--fg); background: var(--ink-2); }
+.nav a[aria-current="page"] { color: var(--fg); background: var(--ink-3); }
+.nav .sep { width: 1px; background: var(--line); margin: 4px 6px; flex: none; }
+.nav a.meta { color: var(--accent); }
+.help-btn { flex: none; border: 1px solid var(--line); background: var(--ink-2); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 13px; }
+
+.view { padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin: 0 auto; }
+.view[hidden] { display: none !important; }
+.eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+.lede { color: var(--muted); max-width: 62ch; margin: 8px 0 0; }
+
+/* ---------- Accueil ---------- */
+.hello h1 { font-size: clamp(28px, 4vw, 40px); margin-top: 6px; }
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
+.tpl { text-align: left; background: var(--ink-1); border: 1px solid var(--line); border-radius: 14px; padding: 0; overflow: hidden; display: flex; flex-direction: column; transition: border-color .15s, transform .15s; }
+.tpl:hover { border-color: var(--accent); transform: translateY(-2px); }
+.tpl canvas { width: 100%; aspect-ratio: 16/9; display: block; background: #000; }
+.tpl .tpl-body { padding: 12px 14px 14px; display: grid; gap: 2px; }
+.tpl b { font-size: 15px; }
+.tpl span { color: var(--muted); font-size: 13px; }
+.tpl .tag { justify-self: start; margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--info); background: rgba(127,178,255,.12); padding: 2px 8px; border-radius: 99px; }
+.section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
+.section-head h2 { font-size: 20px; }
+.link-btn { background: none; border: 0; color: var(--accent); font-weight: 700; padding: 0; }
+
+/* ---------- Listes (créations) ---------- */
+.rows { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; background: var(--ink-1); }
+.row + .row { border-top: 1px solid var(--line); }
+.row .thumb { width: 56px; aspect-ratio: 16/9; border-radius: 6px; background: linear-gradient(135deg, #2b3a55, #c97b5b); display: grid; place-items: center; font-size: 10px; font-weight: 800; color: #fff; }
+.row .t { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .m { color: var(--muted); font-size: 12px; }
+.row .acts { display: flex; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--ink-3); color: var(--muted); }
+.chip.ex { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- Boutons ---------- */
+.btn { border: 1px solid var(--line); background: var(--ink-2); border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--ink-3); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.big { padding: 12px 18px; font-size: 15px; border-radius: 10px; width: 100%; justify-content: center; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Éditeur ---------- */
+.editor { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 18px; align-items: start; }
+.panel { background: var(--ink-1); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.panel-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.panel-head h2 { font-size: 17px; }
+.panel-head .sub { font-size: 12px; color: var(--muted); }
+.saved { font-size: 11px; color: var(--ok); white-space: nowrap; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+.steps button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 4px; font-size: 12px; font-weight: 700; color: var(--muted); display: grid; justify-items: center; gap: 2px; }
+.steps button .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--ink-3); font-size: 11px; }
+.steps button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.steps button[aria-selected="true"] .n { background: var(--accent); color: var(--accent-ink); }
+.step-body { padding: 16px; display: grid; gap: 16px; }
+.field { display: grid; gap: 6px; }
+.field > label, .lbl { font-size: 12px; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.field input[type="text"], .field textarea, .field select { width: 100%; background: var(--ink-0); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
+.field textarea { min-height: 112px; resize: vertical; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; }
+.hint { font-size: 12px; color: var(--dim); }
+.choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.choices.three { grid-template-columns: repeat(3, 1fr); }
+.choice { background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; text-align: left; display: grid; gap: 2px; font-size: 13px; font-weight: 700; }
+.choice small { font-weight: 500; color: var(--muted); font-size: 11.5px; }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice .sw { height: 26px; border-radius: 6px; margin-bottom: 6px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.swatch[aria-pressed="true"] { border-color: var(--fg); }
+.range { width: 100%; accent-color: var(--accent); }
+.seg { display: inline-grid; grid-auto-flow: column; background: var(--ink-0); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { background: none; border: 0; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink-3); color: var(--fg); }
+.step-foot { display: flex; justify-content: space-between; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--ink-0); }
+.reco { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 12px; display: grid; gap: 4px; }
+.reco b { font-size: 14px; }
+.reco span { font-size: 12.5px; color: var(--muted); }
+.filename { font-family: var(--f-mono); font-size: 12px; background: var(--ink-0); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+.progress { height: 8px; border-radius: 99px; background: var(--ink-3); overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--rec); transition: width .1s linear; }
+
+.stage { display: grid; gap: 10px; min-width: 0; }
+.stage-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.stage-bar .grp { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.viewport { background: #07080b; border: 1px solid var(--line); border-radius: 14px; display: grid; place-items: center; padding: 14px; height: min(62vh, 600px); min-height: 280px; overflow: hidden; }
+.viewport canvas { max-width: 100%; max-height: 100%; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.transport { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--ink-1); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.play { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 14px; font-weight: 900; }
+.tc { font-size: 13px; color: var(--fg); }
+.tc small { color: var(--dim); }
+.track { position: relative; height: 34px; border-radius: 6px; background: var(--ink-0); cursor: pointer; touch-action: none; overflow: hidden; }
+.track .seg-in, .track .seg-hold, .track .seg-out { position: absolute; top: 8px; bottom: 8px; border-radius: 3px; }
+.seg-in { background: rgba(127,178,255,.45); }
+.seg-hold { background: rgba(242,193,78,.25); }
+.seg-out { background: rgba(255,93,98,.4); }
+.track .head { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fg); box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.tip { font-size: 12.5px; color: var(--muted); background: var(--ink-1); border: 1px dashed var(--line); border-radius: 10px; padding: 9px 12px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.kbd { font-family: var(--f-mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--ink-2); }
+
+/* ---------- Kit de marque ---------- */
+.brand-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 22px; }
+.card { background: var(--ink-1); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; align-content: start; }
+.card h3 { font-size: 16px; }
+.drop { border: 1.5px dashed var(--line); border-radius: 12px; padding: 20px; display: flex; gap: 14px; align-items: center; cursor: pointer; }
+.drop:hover { border-color: var(--accent); }
+.logo-prev { width: 64px; height: 64px; border-radius: 12px; background: var(--ink-0); display: grid; place-items: center; overflow: hidden; flex: none; font-family: var(--f-display); font-weight: 800; font-size: 24px; }
+.logo-prev img { width: 100%; height: 100%; object-fit: contain; }
+.colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.color { display: flex; align-items: center; gap: 10px; background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.color input[type="color"] { width: 34px; height: 34px; border: 0; padding: 0; background: none; border-radius: 8px; }
+.color div { display: grid; font-size: 12px; min-width: 0; }
+.color b { font-size: 12.5px; }
+.color span { color: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+.fontrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.fontrow .sample { font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* ---------- Fonctionnalités & technique ---------- */
+.feat-groups { display: grid; gap: 28px; margin-top: 26px; }
+.feat-group h2 { font-size: 20px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.feat-group h2 small { font-family: var(--f-ui); font-size: 13px; color: var(--muted); font-weight: 500; }
+.feat-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+.feat { background: var(--ink-1); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; align-content: start; }
+.feat .top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.feat b { font-size: 14.5px; }
+.feat p { margin: 0; color: var(--muted); font-size: 13px; }
+.v { font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 99px; white-space: nowrap; letter-spacing: .04em; }
+.v1 { background: rgba(95,211,155,.14); color: var(--ok); }
+.v2 { background: rgba(127,178,255,.14); color: var(--info); }
+.new { background: var(--accent-soft); color: var(--accent); }
+.legend-v { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; font-size: 12.5px; color: var(--muted); }
+
+.tech-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 22px; }
+.tech-grid .wide { grid-column: 1 / -1; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+td, th { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+pre.tree { margin: 0; background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; font-family: var(--f-mono); font-size: 12px; line-height: 1.65; color: var(--muted); }
+pre.tree b { color: var(--fg); font-weight: 700; }
+pre.tree em { color: var(--accent); font-style: normal; }
+.pipeline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pipe { background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; display: grid; gap: 1px; min-width: 120px; }
+.pipe b { font-size: 13px; }
+.pipe span { font-size: 11.5px; color: var(--muted); }
+.pipe.ok { border-color: rgba(95,211,155,.5); }
+.arrow { color: var(--dim); font-weight: 800; }
+ul.clean { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+ul.clean b { color: var(--fg); }
+.ask { border-color: var(--accent); }
+
+/* ---------- Aide / toast ---------- */
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); background: var(--fg); color: var(--ink-0); font-weight: 700; padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: .2s; z-index: 50; max-width: calc(100% - 32px); font-size: 13px; }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100%); background: var(--ink-1); border-left: 1px solid var(--line); z-index: 40; padding: calc(18px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 18px 18px; overflow-y: auto; display: grid; gap: 14px; align-content: start; transform: translateX(100%); transition: transform .2s; }
+.drawer.on { transform: none; }
+.drawer h2 { font-size: 20px; }
+.qa { background: var(--ink-0); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.qa b { display: block; margin-bottom: 4px; }
+.qa p { margin: 0; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 920px) {
+  .editor, .brand-grid, .tech-grid { grid-template-columns: minmax(0, 1fr); }
+  .stage { order: -1; }
+  .viewport { height: 46vh; }
+}
+@media (max-width: 520px) {
+  .transport { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .transport .loopbtn { display: none; }
+  .brand span.name-long { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<div class="mock-banner">Maquette V1 · direction artistique Motion Studio v2 · rendu = moteur réel de DStudio · exports simulés</div>
+<header class="appbar">
+  <div class="brand"><div class="brand-mark">D</div><span>DStudio</span></div>
+  <nav class="nav" aria-label="Navigation principale">
+    <a href="#accueil">Créer</a>
+    <a href="#editeur">Éditeur</a>
+    <a href="#marque">Kit de marque</a>
+    <a href="#creations">Mes créations</a>
+    <span class="sep" aria-hidden="true"></span>
+    <a href="#features" class="meta">Fonctionnalités V1</a>
+    <a href="#technique" class="meta">Technique</a>
+  </nav>
+  <button class="help-btn" id="helpBtn" type="button">? Aide</button>
+</header>
+
+<!-- ===================== ACCUEIL ===================== -->
+<main>
+<section class="view" id="v-accueil">
+  <div class="hello">
+    <div class="eyebrow">Bonjour 👋</div>
+    <h1>Qu'est-ce que tu veux ajouter à ta vidéo&nbsp;?</h1>
+    <p class="lede">Choisis un modèle, tape ton texte, exporte. Le fichier sort prêt à glisser au-dessus de ta vidéo, avec le fond transparent.</p>
+  </div>
+  <div class="tpl-grid" id="tplGrid"></div>
+
+  <div class="section-head">
+    <h2>Reprendre là où tu t'es arrêté</h2>
+    <a class="link-btn" href="#creations">Tout voir →</a>
+  </div>
+  <div class="rows" id="recentRows"></div>
+</section>
+
+<!-- ===================== ÉDITEUR ===================== -->
+<section class="view" id="v-editeur" hidden>
+  <div class="editor">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="sub" id="edTplLabel">Modèle</div>
+          <h2 id="edTitle">Titre d'intro</h2>
+        </div>
+        <div style="display:grid;justify-items:end;gap:6px">
+          <div class="seg" aria-label="Annuler / rétablir">
+            <button type="button" id="undoBtn" title="Annuler (Ctrl+Z)">↶</button>
+            <button type="button" id="redoBtn" title="Rétablir (Ctrl+Maj+Z)">↷</button>
+          </div>
+          <span class="saved">● Enregistré automatiquement</span>
+        </div>
+      </div>
+      <div class="steps" role="tablist" id="steps">
+        <button role="tab" type="button" data-step="0" aria-selected="true"><span class="n">1</span>Texte</button>
+        <button role="tab" type="button" data-step="1" aria-selected="false"><span class="n">2</span>Style</button>
+        <button role="tab" type="button" data-step="2" aria-selected="false"><span class="n">3</span>Animation</button>
+        <button role="tab" type="button" data-step="3" aria-selected="false"><span class="n">4</span>Exporter</button>
+      </div>
+
+      <div class="step-body" data-panel="0" id="textPanel"></div>
+
+      <div class="step-body" data-panel="1" id="stylePanel" hidden></div>
+
+      <div class="step-body" data-panel="2" id="animPanel" hidden></div>
+
+      <div class="step-body" data-panel="3" hidden>
+        <div class="field">
+          <span class="lbl">Tu montes avec quel logiciel ?</span>
+          <div class="choices three" id="appChoices"></div>
+        </div>
+        <div class="reco" id="reco"></div>
+        <div class="field">
+          <span class="lbl">Fond</span>
+          <div class="seg" id="bgExportSeg">
+            <button type="button" data-v="alpha" aria-pressed="true">Transparent</button>
+            <button type="button" data-v="black" aria-pressed="false">Noir</button>
+            <button type="button" data-v="green" aria-pressed="false">Vert (incrustation)</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl">Nom du fichier</span>
+          <div class="filename" id="fileName"></div>
+        </div>
+        <div class="field" id="exportProg" hidden>
+          <span class="lbl"><span id="exportProgText">Rendu image par image…</span><span class="mono" id="exportPct">0 %</span></span>
+          <div class="progress"><i id="exportBar"></i></div>
+        </div>
+        <button class="btn primary big" id="exportBtn" type="button">⬇ Exporter la vidéo</button>
+      </div>
+
+      <div class="step-foot">
+        <button class="btn" type="button" id="prevStep">← Retour</button>
+        <button class="btn primary" type="button" id="nextStep">Suivant →</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-bar">
+        <div class="grp">
+          <div class="seg" id="ratioSeg" aria-label="Format">
+            <button type="button" data-v="16:9" aria-pressed="true" title="YouTube, site web">16:9</button>
+            <button type="button" data-v="9:16" aria-pressed="false" title="Reels, TikTok, Shorts">9:16</button>
+            <button type="button" data-v="1:1" aria-pressed="false" title="Post carré">1:1</button>
+            <button type="button" data-v="4:5" aria-pressed="false" title="Post Instagram">4:5</button>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="seg" id="bgSeg" aria-label="Fond d'aperçu">
+            <button type="button" data-v="scene" aria-pressed="true">Exemple</button>
+            <button type="button" data-v="checker" aria-pressed="false">Transparent</button>
+            <button type="button" data-v="black" aria-pressed="false">Noir</button>
+          </div>
+          <button class="btn" type="button" id="safeBtn" aria-pressed="false">▢ Zones sûres</button>
+        </div>
+      </div>
+      <div class="viewport"><canvas id="stageCanvas" width="960" height="540" aria-label="Aperçu de l'animation"></canvas></div>
+      <div class="transport">
+        <button class="play" id="playBtn" type="button" aria-label="Lecture / pause">❚❚</button>
+        <span class="tc mono" id="tc">00:00:00 <small>/ 04:00</small></span>
+        <div class="track" id="track" aria-label="Ligne de temps"></div>
+        <button class="btn loopbtn" id="loopBtn" type="button" aria-pressed="true">↻ En boucle</button>
+      </div>
+      <div class="legend">
+        <span><i style="background:rgba(127,178,255,.6)"></i>Entrée</span>
+        <span><i style="background:rgba(242,193,78,.45)"></i>Reste à l'écran</span>
+        <span><i style="background:rgba(255,93,98,.55)"></i>Sortie</span>
+        <span class="mono" style="margin-left:auto">Export <span id="resLbl">1920×1080</span></span>
+      </div>
+      <div class="tip" id="tip"><span>💡 Astuce : <span class="kbd">Espace</span> lance ou met en pause, <span class="kbd">←</span> <span class="kbd">→</span> avancent image par image. Dans l'outil, tu peux glisser une capture de ta vidéo sur l'aperçu.</span><button class="link-btn" type="button" id="tipClose">OK</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== KIT DE MARQUE ===================== -->
+<section class="view" id="v-marque" hidden>
+  <div class="eyebrow">Partagé avec toute l'équipe</div>
+  <h1 style="font-size:32px;margin-top:6px">Kit de marque</h1>
+  <p class="lede">Couleurs, polices et logo réglés une seule fois. Tous les modèles s'en servent automatiquement, pour que chaque vidéo de l'équipe ait le même habillage.</p>
+  <div class="brand-grid">
+    <div class="card">
+      <h3>Identité</h3>
+      <div class="field"><label for="brandName">Nom de la marque</label><input type="text" id="brandName" value="Siestify"></div>
+      <label class="drop" for="logoFile">
+        <div class="logo-prev" id="logoPrev">S</div>
+        <div><b>Logo</b><div class="hint">Glisse un PNG ou SVG ici, de préférence avec fond transparent. Essaie : il apparaît dans les aperçus.</div></div>
+      </label>
+      <input type="file" id="logoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp" hidden>
+      <h3>Couleurs</h3>
+      <div class="colors" id="brandColors"></div>
+    </div>
+    <div class="card">
+      <h3>Polices</h3>
+      <div class="fontrow"><div><div class="hint">Titres</div><div class="sample" id="fontTitleSample" style="font-family:Inter;font-weight:800">Un mot, <span style="color:#ec4899">deux réponses</span></div></div><select id="fontTitleSel" aria-label="Police des titres" class="btn"></select></div>
+      <div class="fontrow"><div><div class="hint">Textes secondaires</div><div class="sample" style="font-family:Inter;font-weight:500;font-size:17px">Co-founder &amp; CEO · Siestify</div></div><span class="chip">Inter</span></div>
+      <h3>Préréglages d'équipe</h3>
+      <div class="rows" style="margin-top:0">
+        <div class="row"><div class="thumb">16:9</div><div><div class="t">YouTube</div><div class="m">16:9, texte comme tapé</div></div><span class="chip ex">Exemple</span></div>
+        <div class="row"><div class="thumb">9:16</div><div><div class="t">Reels / TikTok</div><div class="m">9:16, majuscules</div></div><span class="chip ex">Exemple</span></div>
+        <div class="row"><div class="thumb">16:9</div><div><div class="t">Sur une vidéo chargée</div><div class="m">Voile noir 35 % + vignettage</div></div><span class="chip ex">Exemple</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" type="button" data-toast="Maquette : le kit serait enregistré dans un fichier .json partageable">⬇ Exporter le kit</button>
+        <button class="btn" type="button" data-toast="Maquette : import d'un kit .json reçu d'un collègue">⬆ Importer un kit</button>
+      </div>
+      <p class="hint" style="margin:0">Le kit officiel vit dans le dépôt GitHub : quand quelqu'un le modifie et que c'est validé, toute l'équipe reçoit la mise à jour au prochain chargement du site.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MES CRÉATIONS ===================== -->
+<section class="view" id="v-creations" hidden>
+  <div class="eyebrow">Gardé dans ton navigateur</div>
+  <h1 style="font-size:32px;margin-top:6px">Mes créations</h1>
+  <p class="lede">Chaque création est enregistrée au fil de l'eau. Tu peux la rouvrir, la dupliquer pour un nouvel épisode, ou l'envoyer à un collègue sous forme de fichier projet.</p>
+  <div class="rows" id="allRows"></div>
+</section>
+
+<!-- ===================== FONCTIONNALITÉS ===================== -->
+<section class="view" id="v-features" hidden>
+  <div class="eyebrow">Proposition à valider</div>
+  <h1 style="font-size:32px;margin-top:6px">Ce que contient la V1</h1>
+  <p class="lede">Tout ce que fait Motion Studio v2 est conservé, avec sa direction artistique, et réorganisé pour débuter facilement. Les badges indiquent ce que je propose pour la première version et ce qui peut attendre.</p>
+  <div class="legend-v"><span class="v v1">V1</span> dans la première version <span class="v new">NOUVEAU</span> absent de Motion Studio v2 <span class="v v2">PLUS TARD</span> idée pour une version suivante</div>
+  <div class="feat-groups" id="featGroups"></div>
+</section>
+
+<!-- ===================== TECHNIQUE ===================== -->
+<section class="view" id="v-technique" hidden>
+  <div class="eyebrow">Sous le capot</div>
+  <h1 style="font-size:32px;margin-top:6px">Comment le projet sera construit</h1>
+  <p class="lede">Tu n'as pas besoin de comprendre cette page pour utiliser l'outil. Elle explique les choix pour que n'importe quel développeur ou agent IA (Claude, Gemini, Antigravity…) puisse reprendre le projet.</p>
+  <div class="tech-grid">
+    <div class="card">
+      <h3>Outils choisis</h3>
+      <table>
+        <tr><th>Rôle</th><th>Choix</th></tr>
+        <tr><td>Langage</td><td>TypeScript (code en anglais, interface en français)</td></tr>
+        <tr><td>Interface</td><td>React + Vite</td></tr>
+        <tr><td>Moteur vidéo</td><td>Canvas 2D, rendu image par image (pas d'enregistrement en direct, donc pas d'images sautées)</td></tr>
+        <tr><td>Encodage</td><td>ffmpeg.wasm servi par le site : MOV ProRes 4444 transparent, WebM VP8 transparent, MP4</td></tr>
+        <tr><td>Tests</td><td>Vitest (logique), Playwright (parcours complet + comparaison d'images)</td></tr>
+        <tr><td>Qualité</td><td>ESLint, Prettier, vérification des types</td></tr>
+        <tr><td>Hébergement</td><td>GitHub Pages, publié automatiquement</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Organisation du code</h3>
+<pre class="tree"><b>dstudio/</b>
+├─ <em>AGENTS.md</em>        règles pour tous les agents IA
+├─ <em>CLAUDE.md</em>        préférences de travail (renvoie à AGENTS.md)
+├─ <em>GEMINI.md</em>        idem pour Gemini / Antigravity
+├─ docs/            guide utilisateur, décisions
+├─ src/
+│  ├─ <b>engine/</b>        moteur : temps, easing, rendu
+│  ├─ <b>templates/</b>     1 dossier par modèle
+│  │   ├─ intro/  chapter/  lower-third/  playing-card/ …
+│  ├─ <b>export/</b>        WebM, MP4, MOV, PNG, zip
+│  ├─ <b>brand/</b>         kit de marque
+│  ├─ <b>state/</b>         créations, annuler/rétablir
+│  └─ <b>ui/</b>            écrans et composants
+├─ presets/         kit et préréglages d'équipe
+└─ tests/           unitaires + e2e + images de réf.</pre>
+    </div>
+    <div class="card wide">
+      <h3>Contrôle automatique à chaque modification</h3>
+      <div class="pipeline">
+        <div class="pipe"><b>Modification</b><span>branche + pull request</span></div><span class="arrow">→</span>
+        <div class="pipe"><b>Vérifs</b><span>lint · types</span></div><span class="arrow">→</span>
+        <div class="pipe"><b>Tests</b><span>unitaires</span></div><span class="arrow">→</span>
+        <div class="pipe"><b>Rendu de réf.</b><span>chaque modèle comparé image par image</span></div><span class="arrow">→</span>
+        <div class="pipe"><b>Aperçu</b><span>build de test</span></div><span class="arrow">→</span>
+        <div class="pipe ok"><b>Fusion sur main</b><span>publication sur GitHub Pages</span></div>
+      </div>
+      <p class="hint" style="margin:0">Le principe anti-régression : chaque modèle est dessiné à des instants précis (0,3 s, 1 s, fin…) et comparé à une image de référence. Si une animation change sans qu'on l'ait voulu, le contrôle échoue et rien n'est publié.</p>
+    </div>
+    <div class="card">
+      <h3>Règles pour les agents IA</h3>
+      <ul class="clean">
+        <li><b>AGENTS.md</b> est la source unique : commandes, architecture, conventions. Lu par Claude, Gemini/Antigravity, Codex, Cursor.</li>
+        <li><b>CLAUDE.md</b> et <b>GEMINI.md</b> y renvoient et ajoutent tes préférences personnelles.</li>
+        <li>Ajouter un modèle = ajouter un dossier dans <span class="mono">templates/</span>, sans toucher au reste.</li>
+        <li>Une fonctionnalité = une branche + une pull request vérifiée.</li>
+      </ul>
+    </div>
+    <div class="card ask">
+      <h3>Ce dont j'aurai besoin de toi</h3>
+      <ul class="clean">
+        <li><b>Un compte GitHub</b> et l'outil <span class="mono">gh</span> connecté (je te guiderai, une commande à taper).</li>
+        <li><b>Le logiciel de montage</b> de l'équipe, pour choisir le bon format d'export.</li>
+        <li><b>Le kit de marque</b> : logo (PNG/SVG transparent), couleurs, polices.</li>
+        <li><b>1 ou 2 vidéos d'exemple</b> déjà montées, pour caler le style.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<aside class="drawer" id="drawer" aria-label="Aide">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>Aide</h2><button class="btn" type="button" id="drawerClose">Fermer</button></div>
+  <p class="hint" style="margin:0">Dans la vraie version, ce panneau contient un guide pas à pas et une visite guidée au premier lancement.</p>
+  <div class="qa"><b>Comment mettre le titre sur ma vidéo ?</b><p>Exporte, puis glisse le fichier sur une piste au-dessus de ta vidéo dans ton logiciel de montage. Le fond transparent laisse voir ta vidéo dessous.</p></div>
+  <div class="qa"><b>Mon logiciel affiche un fond noir</b><p>Ton logiciel ne lit pas ce format transparent. Reviens à l'étape Exporter et choisis ton logiciel dans la liste : DStudio choisit le bon format.</p></div>
+  <div class="qa"><b>Je veux faire 10 synthés d'un coup</b><p>Choisis le modèle « Synthés en lot » et colle ta liste : tu récupères un fichier par personne.</p></div>
+  <div class="qa"><b>Raccourcis clavier</b><p><span class="kbd">Espace</span> lecture/pause · <span class="kbd">←</span><span class="kbd">→</span> image par image · <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> annuler · <span class="kbd">Ctrl</span>+<span class="kbd">E</span> exporter</p></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+

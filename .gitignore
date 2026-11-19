@@ -1,0 +1,11 @@
+node_modules
+dist
+public/ffmpeg
+*.tsbuildinfo
+playwright-report
+test-results
+.env
+.env.*
+*:Zone.Identifier
+.claude/settings.local.json
+.DS_Store

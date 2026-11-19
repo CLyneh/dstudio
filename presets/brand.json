@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "name": "Siestify",
+  "accent": "#ec4899",
+  "palette": ["#ec4899", "#f43f5e", "#8b5cf6", "#f2c14e", "#22c3a6", "#ffffff"],
+  "textColor": "#ffffff",
+  "titleFontId": "inter",
+  "logoDataUrl": null
+}

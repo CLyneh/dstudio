@@ -1,0 +1,305 @@
+.editor {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.panel {
+  background: var(--ink-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  min-width: 0;
+}
+.panel-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.panel-head h1 {
+  font-size: 18px;
+}
+.panel-head .sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.panel-head-tools {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+.saved {
+  font-size: 11px;
+  color: var(--ok);
+  white-space: nowrap;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--line);
+}
+.steps button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.steps .n {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ink-3);
+  font-size: 11px;
+}
+.steps button[aria-selected='true'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+.steps button[aria-selected='true'] .n {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.step-body {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+.step-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--ink-0);
+}
+.reco {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+.reco b {
+  font-size: 14px;
+}
+.reco span {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.filename {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  background: var(--ink-0);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+}
+.result {
+  border: 1px solid var(--ok);
+  background: rgba(95, 211, 155, 0.1);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.result b {
+  color: var(--ok);
+}
+.error-box {
+  border: 1px solid var(--danger);
+  background: rgba(255, 93, 98, 0.1);
+  border-radius: var(--r-md);
+  padding: 12px;
+  font-size: 13px;
+}
+
+/* ---------- Stage ---------- */
+.stage {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.stage-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.stage-bar .grp {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.viewport {
+  position: relative;
+  background: var(--stage);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  height: min(62vh, 620px);
+  min-height: 280px;
+  overflow: hidden;
+}
+.viewport.over {
+  border-color: var(--accent);
+}
+.viewport canvas {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.drop-hint {
+  position: absolute;
+  inset: 14px;
+  border: 2px dashed var(--accent);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 8, 11, 0.75);
+  font-weight: 800;
+  pointer-events: none;
+}
+.transport {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.play {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+.tc {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.tc small {
+  color: var(--dim);
+}
+.track {
+  position: relative;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--ink-0);
+  cursor: pointer;
+  touch-action: none;
+  overflow: hidden;
+}
+.track .ph {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 3px;
+}
+.ph.in {
+  background: rgba(127, 178, 255, 0.45);
+}
+.ph.hold {
+  background: rgba(242, 193, 78, 0.25);
+}
+.ph.out {
+  background: rgba(255, 93, 98, 0.4);
+}
+.track .head {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--fg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--muted);
+  align-items: center;
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+.legend .res {
+  margin-left: auto;
+}
+.tip {
+  font-size: 12.5px;
+  color: var(--muted);
+  background: var(--ink-1);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 920px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stage {
+    order: -1;
+  }
+  .viewport {
+    height: auto;
+    min-height: 0;
+  }
+  .viewport canvas {
+    max-height: 56vh;
+  }
+}
+@media (max-width: 520px) {
+  .transport {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .transport .track {
+    grid-column: 1 / -1;
+  }
+  .transport .loop {
+    display: none;
+  }
+  .choices.three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
