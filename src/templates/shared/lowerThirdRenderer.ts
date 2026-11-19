@@ -3,6 +3,7 @@ import { easeInCubic, easeOutBack, easeOutExpo } from '@/engine/easing';
 import { hexToRgba } from '@/engine/color';
 import { drawLogo, isWatermark } from '@/engine/logo';
 import { clamp } from '@/engine/math';
+import { VERTICAL_UNSAFE } from '@/engine/safeZones';
 import type { RenderContext } from '@/engine/types';
 import type { Choice } from '../types';
 import { cased, interFont, titleFont } from './typography';
@@ -91,7 +92,11 @@ export function drawLowerThirdCard(rc: RenderContext, rawName: string, rawRole: 
 
   const isRight = style.position === 'right';
   const marginX = portrait ? (W - boxW) / 2 : 105 * S;
-  const marginBottom = (portrait ? 250 : 100) * S;
+  const marginBottom = portrait
+    ? style.safeVertical
+      ? H * VERTICAL_UNSAFE.bottom + 40 * S
+      : 250 * S
+    : 100 * S;
   let x = marginX;
   if (style.position === 'center') x = (W - boxW) / 2;
   else if (isRight) x = portrait ? (W - boxW) / 2 : W - marginX - boxW;

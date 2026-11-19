@@ -73,6 +73,7 @@ export function createProject(
       textCase: preset?.textCase ?? 'normal',
       textScale: 1,
       position: 'right',
+      safeVertical: false,
       veil: preset?.veil ?? 0,
       vignette: preset?.vignette ?? false,
       logo: { ...DEFAULT_LOGO },
@@ -148,6 +149,7 @@ export function parseProject(input: unknown, brand: BrandKit): Project {
       position: s.position === 'left' || s.position === 'center' ? s.position : 'right',
       veil: clamp(num(s.veil, 0), 0, VEIL_MAX),
       vignette: s.vignette === true,
+      safeVertical: s.safeVertical === true,
       logo: {
         show: typeof l.show === 'boolean' ? l.show : DEFAULT_LOGO.show,
         placement: LOGO_PLACEMENTS.some((p) => p.id === l.placement) ? l.placement! : DEFAULT_LOGO.placement,

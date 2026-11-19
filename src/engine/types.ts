@@ -27,6 +27,8 @@ export interface StyleSettings {
   /** Black veil over the video, 0 → 0.85. */
   veil: number;
   vignette: boolean;
+  /** Vertical formats: raise lower thirds above the Reels / TikTok interface. */
+  safeVertical: boolean;
   logo: LogoSettings;
 }
 

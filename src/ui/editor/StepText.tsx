@@ -87,6 +87,20 @@ export function StepText({ project }: { project: Project }) {
           />
         </div>
       )}
+      {template.supportsPosition && project.format !== '16:9' && (
+        <div className="field">
+          <span className="label">Hauteur en format vertical</span>
+          <Segmented<boolean>
+            label="Hauteur en format vertical"
+            value={project.style.safeVertical}
+            onChange={(safeVertical) => update({ style: { safeVertical } })}
+            options={[
+              { value: false, label: 'Comme Motion Studio' },
+              { value: true, label: "Au-dessus de l'interface Reels" },
+            ]}
+          />
+        </div>
+      )}
       <p className="hint">
         Le texte se met à jour en direct sur l'aperçu. Les lignes trop longues passent à la ligne toutes
         seules.

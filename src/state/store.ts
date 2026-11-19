@@ -75,7 +75,7 @@ interface Actions {
 export type StoreState = PersistedState & TransientState & Actions;
 
 export const DEFAULT_EXPORT_PREFS: ExportPrefs = {
-  app: 'premiere',
+  app: 'capcut',
   background: 'alpha',
   fps: 30,
   seriesMode: 'split',
