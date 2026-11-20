@@ -208,6 +208,46 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
       ctx.fillText(sub, cx, cy + boxH / 2 - 42 * S);
     }
     ctx.restore();
+  } else if (anim === 'fade') {
+    const topT = easeOutQuint(stepProgress(t, 0, 0.6));
+    const mainT = easeOutQuint(stepProgress(t, 0.15, 0.7));
+    const subT = easeOutQuint(stepProgress(t, 0.4, 0.6));
+    drawTop(exitAlpha * topT, topY);
+    ctx.save();
+    ctx.globalAlpha = exitAlpha * mainT;
+    ctx.font = titleFont(rc, 900, fontSize);
+    ctx.fillStyle = primary;
+    shadow(rc);
+    ctx.fillText(main, cx, cy);
+    ctx.fillStyle = accent;
+    roundRect(ctx, cx - 90 * S, cy + fontSize * 0.68, 180 * S, 9 * S, 4.5 * S);
+    ctx.fill();
+    ctx.restore();
+    drawSub(exitAlpha * subT, subY + 18 * S);
+  } else if (anim === 'typewriter') {
+    // Letters appear one by one (about 16 per second) with a blinking cursor, then the subtitle.
+    const chars = Array.from(main);
+    const typeTime = Math.min(1.4, chars.length / 16);
+    const typed = Math.floor(chars.length * stepProgress(t, 0.2, typeTime));
+    const done = t >= 0.2 + typeTime;
+    drawTop(exitAlpha * easeOutQuint(stepProgress(t, 0, 0.4)), topY);
+    ctx.save();
+    ctx.globalAlpha = exitAlpha;
+    ctx.font = titleFont(rc, 900, fontSize);
+    ctx.fillStyle = primary;
+    shadow(rc);
+    const fullW = ctx.measureText(main).width;
+    const shown = chars.slice(0, typed).join('');
+    ctx.textAlign = 'left';
+    ctx.fillText(shown, cx - fullW / 2, cy);
+    const cursorOn = !done || Math.floor(t * 2.5) % 2 === 0;
+    if (cursorOn && exit.raw === 0) {
+      ctx.fillStyle = accent;
+      const x = cx - fullW / 2 + ctx.measureText(shown).width + 6 * S;
+      ctx.fillRect(x, cy - fontSize * 0.45, 8 * S, fontSize * 0.9);
+    }
+    ctx.restore();
+    drawSub(exitAlpha * easeOutQuint(stepProgress(t, 0.2 + typeTime, 0.5)), subY + 18 * S);
   } else {
     // slide-mask (default)
     const topT = easeOutExpo(stepProgress(t, 0, 0.5));

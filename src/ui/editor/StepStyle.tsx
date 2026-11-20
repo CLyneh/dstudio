@@ -41,28 +41,30 @@ export function StepStyle({ project }: { project: Project }) {
         </div>
       )}
 
-      {template.options?.map((option) => {
-        const current = optionValue(option, project.content);
-        return (
-          <div className="field" key={option.key}>
-            <span className="label">{option.label}</span>
-            <div className="choices">
-              {option.options.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  className="choice"
-                  aria-pressed={current === o.id}
-                  onClick={() => update({ content: { [option.key]: o.id } })}
-                >
-                  {o.label}
-                  <small>{o.description}</small>
-                </button>
-              ))}
+      {template.options
+        ?.filter((option) => (option.step ?? 'style') === 'style')
+        .map((option) => {
+          const current = optionValue(option, project.content);
+          return (
+            <div className="field" key={option.key}>
+              <span className="label">{option.label}</span>
+              <div className="choices">
+                {option.options.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    className="choice"
+                    aria-pressed={current === o.id}
+                    onClick={() => update({ content: { [option.key]: o.id } })}
+                  >
+                    {o.label}
+                    <small>{o.description}</small>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
       <ColorRow
         label="Couleur d'accent"

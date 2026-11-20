@@ -5,7 +5,7 @@ import { drawLogo, isWatermark } from '@/engine/logo';
 import { clamp } from '@/engine/math';
 import type { ItemContent, RenderContext } from '@/engine/types';
 import type { Choice } from '../types';
-import { drawChapterTitle } from '../shared/chapterRenderer';
+import { CHAPTER_ANIMATIONS, drawChapterTitle } from '../shared/chapterRenderer';
 import { cased, interFont, onAccent, titleFont } from '../shared/typography';
 
 export const CARD_ANIMATIONS: Choice[] = [
@@ -18,6 +18,14 @@ export const CARD_ANIMATIONS: Choice[] = [
   { id: 'deal-slide', label: 'Tirage de paquet', description: 'Glisse depuis la pioche + rebond' },
   { id: 'fan-snap', label: 'Distribution éventail', description: 'Paquet en éventail & claquement' },
   { id: 'holo-float', label: 'Lévitation & holo', description: 'Inclinaison 3D & balayage brillant' },
+];
+
+/** Text entrance of "Zoom & intertitre": two own styles + the chapter animations of Motion Studio v2. */
+export const CARD_TEXT_ANIMATIONS: Choice[] = [
+  { id: 'slide-mask', label: 'Slide & masque', description: 'Révélation nette + trait de couleur' },
+  { id: 'fade', label: 'Fondu', description: 'Le texte apparaît en douceur' },
+  { id: 'typewriter', label: 'Machine à écrire', description: 'Lettre par lettre avec un curseur' },
+  ...CHAPTER_ANIMATIONS.filter((a) => a.id !== 'slide-mask'),
 ];
 
 export const CARD_BACKS: Choice[] = [
@@ -610,7 +618,10 @@ function drawZoomIntertitle(
       time: t - tm.text,
       duration: duration - tm.text,
       style: { ...rc.style, logo: { ...rc.style.logo, show: false } },
-      animation: { ...rc.animation, style: 'slide-mask' },
+      animation: {
+        ...rc.animation,
+        style: CARD_TEXT_ANIMATIONS.some((a) => a.id === item.textAnim) ? item.textAnim! : 'slide-mask',
+      },
     },
     {
       kicker: item.badge ?? '',

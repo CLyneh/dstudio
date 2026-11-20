@@ -170,7 +170,7 @@
     let st = '';
     if (t.variants)
       st += `<div class="field"><span class="lbl">${esc(t.variants.label)}</span><div class="choices">${choiceButtons(t.variants.options, p.style.variant, 'data-variant')}</div></div>`;
-    for (const o of t.options ?? []) {
+    for (const o of (t.options ?? []).filter((x) => (x.step ?? 'style') === 'style')) {
       const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
       st += `<div class="field"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
         .map(
@@ -226,7 +226,20 @@
 
     // Animation
     $('#animPanel').innerHTML =
-      `<div class="field"><span class="lbl">Animation <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>
+      `<div class="field"><span class="lbl">Animation <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>${(
+        t.options ?? []
+      )
+        .filter((o) => o.step === 'animation')
+        .map((o) => {
+          const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
+          return `<div class="field" data-for-anim="${o.forAnimation ?? ''}"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
+            .map(
+              (c) =>
+                `<button type="button" class="choice" data-opt="${o.key}" data-optval="${c.id}" aria-pressed="${c.id === cur}">${esc(c.label)}<small>${esc(c.description)}</small></button>`,
+            )
+            .join('')}</div></div>`;
+        })
+        .join('')}
       <div class="field"><label for="durRange">Temps à l'écran <span class="mono" id="durVal"></span></label><input class="range" type="range" id="durRange" min="15" max="100" step="5" value="${p.duration * 10}"></div>`;
   }
 
@@ -318,6 +331,9 @@
       b.setAttribute('aria-pressed', b.dataset.textcolor === p.style.textColor),
     );
     $$('[data-anim]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.anim === p.animation.style));
+    $$('[data-for-anim]').forEach((el) => {
+      el.hidden = !!el.dataset.forAnim && el.dataset.forAnim !== p.animation.style;
+    });
     $$('[data-app]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.app === S.app));
     $$('#ratioSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === p.format));
     const sv = $('#sizeVal');

@@ -36,6 +36,10 @@ export interface TemplateOption {
   label: string;
   /** The first one is the default. */
   options: Choice[];
+  /** Editor step that shows it (default: Style). */
+  step?: 'style' | 'animation';
+  /** Only shown while this animation is selected. */
+  forAnimation?: string;
 }
 
 /** Ready-made text content the user can apply in one click. */

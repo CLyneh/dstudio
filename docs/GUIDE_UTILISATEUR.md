@@ -41,7 +41,8 @@ Fond **noir** ou **vert** → le fichier est un MP4 classique (pas de transparen
   « Couleur unie » remplit la carte avec la couleur d'accent du kit. Dans Style, « Dos de la carte » choisit
   la face cachée : losanges, couleur unie avec ton logo (ajoute-le dans Kit de marque) ou minimaliste.
   L'animation « Zoom & intertitre » montre la carte de dos au centre, la retourne, zoome en s'effaçant,
-  puis affiche le texte comme un intertitre, directement sur ta vidéo. Avec un logo placé « Dans la carte »,
+  puis affiche le texte comme un intertitre, directement sur ta vidéo. Juste en dessous, « Animation du texte »
+  choisit comment le texte arrive : fondu, machine à écrire, ou une des animations d'intertitre. Avec un logo placé « Dans la carte »,
   il s'affiche au-dessus du titre.
 - **Série de chapitres** : une ligne par chapitre (`Surtitre | Titre | Sous-titre`). À l'export, choisis un fichier par
   chapitre ou un seul fichier enchaîné.
