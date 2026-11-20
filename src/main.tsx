@@ -35,7 +35,11 @@ import './ui/styles/editor.css';
 
 import { ensureFontsLoaded } from './engine/fonts';
 import { installTestHooks } from './test/hooks';
+import { readFirebaseConfig } from './auth/config';
+import { AccessGate } from './ui/AccessGate';
 import { App } from './ui/App';
+
+const firebaseConfig = readFirebaseConfig(import.meta.env);
 
 installTestHooks();
 
@@ -43,7 +47,9 @@ installTestHooks();
 void ensureFontsLoaded().finally(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App />
+      <AccessGate config={firebaseConfig}>
+        <App />
+      </AccessGate>
     </StrictMode>,
   );
 });

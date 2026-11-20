@@ -34,6 +34,7 @@ src/
                 TemplateDefinition (champs, animations propres, variantes, phases, items(), render(), fileBase()).
                 shared/ = rendus communs portés de Motion Studio v2 (intro, chapitre, synthé, typographie).
                 registry.ts liste les modèles (l'ordre = l'ordre sur l'accueil).
+  auth/         Accès réservé : connexion Google et liste d'adresses (Firebase, chargé à la demande).
   brand/        Kit de marque (lit presets/brand.json et presets/presets.json, valide tout).
   project/      Le format d'une création (Project), sa validation (parseProject) et son rendu (renderProject).
   export/       Export : choix du format selon le logiciel (targets), noms de fichiers, rendu image par image,
@@ -67,6 +68,7 @@ Sens des dépendances (à respecter) : `engine` ← `templates` ← `project` �
 6. Petits fichiers, une responsabilité par fichier. Pas de fichier « fourre-tout ».
 7. Pas de nouvelle dépendance sans raison claire (la noter dans `docs/DECISIONS.md`).
 8. Pas de requête réseau vers un service tiers à l'exécution : polices et ffmpeg sont servis par le site.
+   Seule exception : Firebase, pour l'accès réservé (`src/auth/`, voir `docs/ACCES_RESERVE.md`).
 
 ## Ajouter un modèle
 
