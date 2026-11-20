@@ -13,7 +13,8 @@ export function StepAnimation({ project }: { project: Project }) {
     <>
       <div className="field">
         <span className="label">
-          Animation <span className="mono">{template.animations.length} styles</span>
+          {template.animationLabel ?? 'Animation'}{' '}
+          <span className="mono">{template.animations.length} styles</span>
         </span>
         <div className="choices" onMouseLeave={() => setHover(null)}>
           {template.animations.map((a) => (
@@ -39,9 +40,7 @@ export function StepAnimation({ project }: { project: Project }) {
       </div>
 
       {template.options
-        ?.filter(
-          (o) => o.step === 'animation' && (!o.forAnimation || o.forAnimation === project.animation.style),
-        )
+        ?.filter((o) => o.step === 'animation' && (!o.showIf || o.showIf(project.content)))
         .map((option) => {
           const current = optionValue(option, project.content);
           return (

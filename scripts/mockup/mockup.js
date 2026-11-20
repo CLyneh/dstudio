@@ -226,13 +226,13 @@
 
     // Animation
     $('#animPanel').innerHTML =
-      `<div class="field"><span class="lbl">Animation <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>${(
+      `<div class="field"><span class="lbl">${esc(t.animationLabel ?? 'Animation')} <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>${(
         t.options ?? []
       )
         .filter((o) => o.step === 'animation')
         .map((o) => {
           const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
-          return `<div class="field" data-for-anim="${o.forAnimation ?? ''}"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
+          return `<div class="field" data-opt-field="${o.key}"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
             .map(
               (c) =>
                 `<button type="button" class="choice" data-opt="${o.key}" data-optval="${c.id}" aria-pressed="${c.id === cur}">${esc(c.label)}<small>${esc(c.description)}</small></button>`,
@@ -331,8 +331,9 @@
       b.setAttribute('aria-pressed', b.dataset.textcolor === p.style.textColor),
     );
     $$('[data-anim]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.anim === p.animation.style));
-    $$('[data-for-anim]').forEach((el) => {
-      el.hidden = !!el.dataset.forAnim && el.dataset.forAnim !== p.animation.style;
+    $$('[data-opt-field]').forEach((el) => {
+      const o = (t.options ?? []).find((x) => x.key === el.dataset.optField);
+      el.hidden = !!o?.showIf && !o.showIf(p.content);
     });
     $$('[data-app]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.app === S.app));
     $$('#ratioSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === p.format));

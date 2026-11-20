@@ -4,6 +4,7 @@ import { withoutHiddenFields } from '../shared/optionalFields';
 import {
   CARD_ANIMATIONS,
   CARD_BACKS,
+  CARD_OUTROS,
   CARD_TEXT_ANIMATIONS,
   CARD_VARIANTS,
   cardPhases,
@@ -76,15 +77,17 @@ export const playingCard: TemplateDefinition = {
   defaultDuration: 5.5,
   supportsPosition: false,
   animations: CARD_ANIMATIONS,
+  animationLabel: 'Animation de début',
   variants: { label: 'Finition de la carte', options: CARD_VARIANTS },
   options: [
     { key: 'back', label: 'Dos de la carte', options: CARD_BACKS },
+    { key: 'outro', label: 'Animation de fin', options: CARD_OUTROS, step: 'animation' },
     {
       key: 'textAnim',
       label: 'Animation du texte',
       options: CARD_TEXT_ANIMATIONS,
       step: 'animation',
-      forAnimation: 'zoom-intertitle',
+      showIf: (content) => (content.outro ?? 'zoom-intertitle') === 'zoom-intertitle',
     },
   ],
   phases: cardPhases,

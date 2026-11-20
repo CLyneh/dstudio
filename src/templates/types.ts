@@ -38,8 +38,8 @@ export interface TemplateOption {
   options: Choice[];
   /** Editor step that shows it (default: Style). */
   step?: 'style' | 'animation';
-  /** Only shown while this animation is selected. */
-  forAnimation?: string;
+  /** Only shown when this returns true (e.g. depends on another option). */
+  showIf?: (content: Record<string, string>) => boolean;
 }
 
 /** Ready-made text content the user can apply in one click. */
@@ -61,6 +61,8 @@ export interface TemplateDefinition {
   /** Seconds; per item for list templates. */
   defaultDuration: number;
   supportsPosition: boolean;
+  /** Title of the animation list in the editor (default: « Animation »). */
+  animationLabel?: string;
   /** Animations specific to this template; the first is the default. */
   animations: Choice[];
   /** Visual variants (card style, card finish…); the first is the default. */

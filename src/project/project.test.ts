@@ -23,7 +23,7 @@ describe('createProject', () => {
   });
   it('uses the first animation and variant of the template', () => {
     const p = createProject('playing-card', TEAM_BRAND);
-    expect(p.animation.style).toBe('zoom-intertitle');
+    expect(p.animation.style).toBe('back-reveal');
     expect(p.style.variant).toBe('noir-collector');
   });
 });

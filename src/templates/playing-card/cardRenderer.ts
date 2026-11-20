@@ -8,16 +8,30 @@ import type { Choice } from '../types';
 import { CHAPTER_ANIMATIONS, drawChapterTitle } from '../shared/chapterRenderer';
 import { cased, interFont, onAccent, titleFont } from '../shared/typography';
 
+/** Entrance of the card ("Animation de début"). */
 export const CARD_ANIMATIONS: Choice[] = [
   {
-    id: 'zoom-intertitle',
-    label: 'Zoom & intertitre',
-    description: 'La carte apparaît, zoome, puis le texte',
+    id: 'back-reveal',
+    label: 'Dos puis retournement',
+    description: 'Le dos au centre, puis la carte se retourne',
   },
   { id: 'card-flip-3d', label: 'Retournement 3D', description: 'Dos géométrique → face + reflet' },
   { id: 'deal-slide', label: 'Tirage de paquet', description: 'Glisse depuis la pioche + rebond' },
   { id: 'fan-snap', label: 'Distribution éventail', description: 'Paquet en éventail & claquement' },
   { id: 'holo-float', label: 'Lévitation & holo', description: 'Inclinaison 3D & balayage brillant' },
+];
+
+/** Ending of the card ("Animation de fin"). */
+export const CARD_OUTROS: Choice[] = [
+  {
+    id: 'zoom-intertitle',
+    label: 'Zoom & intertitre',
+    description: 'La carte zoome et laisse le texte au centre',
+  },
+  { id: 'fade-down', label: 'Fondu', description: "Elle descend et s'efface (sortie d'origine)" },
+  { id: 'flip-away', label: 'Retour face cachée', description: "Elle se retourne sur le dos et s'éloigne" },
+  { id: 'throw', label: 'Envol', description: "Elle s'envole hors de l'écran en tournant" },
+  { id: 'shrink', label: 'Aspiration', description: 'Elle tourbillonne et rétrécit jusqu’à disparaître' },
 ];
 
 /** Text entrance of "Zoom & intertitre": two own styles + the chapter animations of Motion Studio v2. */
@@ -464,40 +478,51 @@ export function cardPhases(duration: number) {
 }
 
 /** A playing card that appears with one of 4 "3D" moves. */
-export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
+interface CardGeometry {
+  w: number;
+  h: number;
+  r: number;
+  p: Palette;
+  back: string;
+}
+
+/** Shared timing scale: animations are designed for a 5.5 s card and shortened on shorter ones. */
+function timeScale(duration: number): number {
+  return Math.min(1, duration / 5.5);
+}
+
+/** Timings of "Zoom & intertitre" (seconds). */
+function zoomTimings(duration: number) {
+  const k = timeScale(duration);
+  return { zoomStart: 2.0 * k, zoomEnd: 2.7 * k, textFade: 0.25 * k, text: 2.5 * k };
+}
+
+/**
+ * Draws the card as its entrance animation leaves it at time t. `exitRaw` (0→1) is the built-in
+ * "Fondu" ending of Motion Studio v2; other endings pass 0 and move the whole drawing themselves.
+ */
+function drawEntrance(
+  rc: RenderContext,
+  item: ItemContent,
+  g: CardGeometry,
+  exitRaw: number,
+  textAlpha: number,
+) {
   const { ctx, width: W, height: H, time: t, duration, scale: S, portrait, style } = rc;
+  const { w, h, r, p, back } = g;
   const cx = W / 2;
   const cy = H / 2;
-  const enterRaw = clamp(t / Math.min(0.95, duration * 0.28));
-  const exitLength = Math.min(0.6, duration * 0.2);
-  const exitRaw = t > duration - exitLength ? clamp((t - (duration - exitLength)) / exitLength) : 0;
-  const easeIn = easeOutExpo(enterRaw);
+  const easeIn = easeOutExpo(clamp(t / Math.min(0.95, duration * 0.28)));
   const easeOut = easeInCubic(exitRaw);
   const exitAlpha = 1 - easeOut;
-
-  if (isWatermark(rc)) drawLogo(rc);
-  if (exitAlpha <= 0.001) return;
-
-  const w = portrait ? 540 : 510;
-  const h = portrait ? 760 : 720;
-  const r = 34;
-  const p = cardPalette(style.variant, style.accent, style.textColor);
   const anim = rc.animation.style;
-  const back = CARD_BACKS.some((b) => b.id === item.back) ? item.back! : CARD_BACKS[0]!.id;
   const sheenAt = (start: number, length: number) => {
     const s = clamp((t - start) / length);
     return s > 0 && s < 1 ? s : -1;
   };
 
   ctx.save();
-  ctx.globalAlpha = exitAlpha;
-
-  if (anim === 'zoom-intertitle') {
-    drawZoomIntertitle(rc, item, w, h, r, p, back, exitAlpha);
-    ctx.restore();
-    return;
-  }
-
+  ctx.globalAlpha *= exitAlpha;
   if (anim === 'deal-slide') {
     const dealT = easeOutBack(clamp(t / Math.min(0.78, duration * 0.25)));
     const slideX = ((1 - dealT) * (portrait ? 480 : 720) - easeOut * 650) * S;
@@ -508,14 +533,15 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(rot);
     ctx.scale(zoom * S, zoom * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
-    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.8));
+    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.8), textAlpha);
   } else if (anim === 'fan-snap') {
     const fanT = easeOutBack(clamp(t / Math.min(0.85, duration * 0.26)));
     const snapT = easeOutExpo(clamp((t - 0.12) / 0.65));
     const open = fanT * (1 - easeOut);
+    const base = ctx.globalAlpha;
     [-1, 1].forEach((side) => {
       ctx.save();
-      ctx.globalAlpha = exitAlpha * 0.88 * easeIn;
+      ctx.globalAlpha = base * 0.88 * easeIn;
       ctx.translate(cx + side * 95 * open * S, cy + (18 + (1 - easeIn) * 80) * S);
       ctx.rotate(side * 0.22 * open);
       ctx.scale(0.92 * S, 0.92 * S);
@@ -527,7 +553,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.translate(cx, cy + ((1 - snapT) * 70 + easeOut * 90) * S);
     ctx.scale(zoom * S, zoom * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.62)', 48, 0, 26);
-    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.85));
+    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.85), textAlpha);
   } else if (anim === 'holo-float') {
     const floatY = Math.sin(t * 2.8) * 14;
     const tilt = Math.sin(t * 2.1) * 0.035;
@@ -538,9 +564,8 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(tilt);
     ctx.scale(zoom * skew * S, zoom * S);
     cardShadow(rc, w, h, r, hexToRgba(style.accent, 0.45), 55, 0, 0);
-    paintFront(rc, item, w, h, r, p, loopSheen <= 1 ? loopSheen : -1);
-  } else {
-    // card-flip-3d (default)
+    paintFront(rc, item, w, h, r, p, loopSheen <= 1 ? loopSheen : -1, textAlpha);
+  } else if (anim === 'card-flip-3d') {
     const flipT = easeInOutCubic(clamp(t / Math.min(1.05, duration * 0.32)));
     const angle = Math.PI * (1 - flipT);
     const cos = Math.cos(angle);
@@ -550,66 +575,123 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(tilt);
     ctx.scale(Math.max(0.02, Math.abs(cos)) * lift * S, lift * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.58)', 45, Math.sin(angle) * 28, 24);
-    if (cos >= 0) paintFront(rc, item, w, h, r, p, sheenAt(0.65, 0.85));
+    if (cos >= 0) paintFront(rc, item, w, h, r, p, sheenAt(0.65, 0.85), textAlpha);
+    else paintBack(rc, w, h, r, p, back);
+  } else {
+    // back-reveal (default): face down in the middle, a pause, then the flip.
+    const k = timeScale(duration);
+    const appear = 0.45 * k;
+    const appearT = easeOutBack(clamp(t / appear));
+    const flipT = easeInOutCubic(clamp((t - 0.9 * k) / (0.6 * k)));
+    const cos = Math.cos(Math.PI * (1 - flipT));
+    const zoom = (0.7 + 0.3 * appearT) * (1 - easeOut * 0.1);
+    ctx.globalAlpha *= clamp(t / (appear * 0.5));
+    ctx.translate(cx, cy + easeOut * 90 * S);
+    ctx.scale(Math.max(0.02, Math.abs(cos)) * zoom * S, zoom * S);
+    cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
+    if (cos >= 0) paintFront(rc, item, w, h, r, p, -1, textAlpha);
     else paintBack(rc, w, h, r, p, back);
   }
   ctx.restore();
+}
 
-  if (!isWatermark(rc) && style.logo.placement !== 'above-text') {
+/** Scales / rotates everything drawn by `draw` around the middle of the frame. */
+function aroundCenter(rc: RenderContext, scaleX: number, scaleY: number, rotation: number, draw: () => void) {
+  const { ctx, width: W, height: H } = rc;
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(rotation);
+  ctx.scale(scaleX, scaleY);
+  ctx.translate(-W / 2, -H / 2);
+  draw();
+  ctx.restore();
+}
+
+/** A playing card: an entrance ("Animation de début") then an ending ("Animation de fin"). */
+export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
+  const { ctx, width: W, height: H, time: t, duration, scale: S, portrait, style } = rc;
+  const cx = W / 2;
+  const cy = H / 2;
+  const w = portrait ? 540 : 510;
+  const h = portrait ? 760 : 720;
+  const g: CardGeometry = {
+    w,
+    h,
+    r: 34,
+    p: cardPalette(style.variant, style.accent, style.textColor),
+    back: CARD_BACKS.some((b) => b.id === item.back) ? item.back! : CARD_BACKS[0]!.id,
+  };
+  const outro = CARD_OUTROS.some((o) => o.id === item.outro) ? item.outro! : CARD_OUTROS[0]!.id;
+
+  if (isWatermark(rc)) drawLogo(rc);
+
+  if (outro === 'zoom-intertitle') {
+    drawZoomOutro(rc, item, g);
+  } else if (outro === 'fade-down') {
+    const exitLength = Math.min(0.6, duration * 0.2);
+    const exitRaw = t > duration - exitLength ? clamp((t - (duration - exitLength)) / exitLength) : 0;
+    if (exitRaw < 0.999) drawEntrance(rc, item, g, exitRaw, 1);
+  } else {
+    const outLen = Math.min(0.8, duration * 0.22);
+    const u = clamp((t - (duration - outLen)) / outLen);
+    if (u <= 0) drawEntrance(rc, item, g, 0, 1);
+    else if (outro === 'throw') {
+      const e = easeInCubic(u);
+      ctx.save();
+      ctx.globalAlpha *= 1 - clamp((u - 0.6) / 0.4);
+      ctx.translate(e * W * 0.75, -e * H * 0.9);
+      aroundCenter(rc, 1 - e * 0.2, 1 - e * 0.2, e * 1.1, () => drawEntrance(rc, item, g, 0, 1));
+      ctx.restore();
+    } else if (outro === 'shrink') {
+      const e = easeInCubic(u);
+      ctx.save();
+      ctx.globalAlpha *= 1 - clamp((u - 0.7) / 0.3);
+      aroundCenter(rc, 1 - e, 1 - e, e * Math.PI * 1.5, () => drawEntrance(rc, item, g, 0, 1));
+      ctx.restore();
+    } else {
+      // flip-away: turns face down, then shrinks back into the distance.
+      const a = easeInOutCubic(clamp(u / 0.55));
+      const cos = Math.cos(Math.PI * a);
+      const away = easeInCubic(clamp((u - 0.55) / 0.45));
+      if (cos >= 0) aroundCenter(rc, Math.max(0.02, cos), 1, 0, () => drawEntrance(rc, item, g, 0, 1));
+      else {
+        const zoom = 1 - away * 0.55;
+        ctx.save();
+        ctx.globalAlpha *= 1 - away;
+        ctx.translate(cx, cy - away * 120 * S);
+        ctx.scale(Math.max(0.02, -cos) * zoom * S, zoom * S);
+        cardShadow(rc, w, h, g.r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
+        paintBack(rc, w, h, g.r, g.p, g.back);
+        ctx.restore();
+      }
+    }
+  }
+
+  if (!isWatermark(rc) && style.logo.placement !== 'above-text' && outro !== 'zoom-intertitle') {
     drawLogo(rc, { topY: cy - (h / 2) * S, badgeLeftX: cx - (w / 2) * S, badgeY: cy - (h / 2 - 50) * S });
   }
 }
 
-/** Timings of "Zoom & intertitre" (seconds, shortened on short clips). */
-function zoomTimings(duration: number) {
-  const k = Math.min(1, duration / 5.5);
-  return {
-    appear: 0.45 * k,
-    flipStart: 0.9 * k,
-    flipEnd: 1.5 * k,
-    zoomStart: 2.0 * k,
-    zoomEnd: 2.7 * k,
-    textFade: 0.25 * k,
-    text: 2.5 * k,
-  };
-}
-
 /**
- * The card pops in face down in the middle of the frame, flips to show its front (title included),
- * zooms until it fills the frame, then the title and question come in the middle exactly like a
- * chapter intertitle (slide & mask).
+ * "Zoom & intertitre": after its entrance, the card zooms until it fills the frame and dissolves,
+ * then the title and question come in the middle like a chapter intertitle.
  */
-function drawZoomIntertitle(
-  rc: RenderContext,
-  item: ItemContent,
-  w: number,
-  h: number,
-  r: number,
-  p: Palette,
-  back: string,
-  exitAlpha: number,
-) {
+function drawZoomOutro(rc: RenderContext, item: ItemContent, g: CardGeometry) {
   const { ctx, width: W, height: H, time: t, duration, scale: S } = rc;
   const tm = zoomTimings(duration);
-  const appearT = easeOutBack(clamp(t / tm.appear));
-  const flipT = easeInOutCubic(clamp((t - tm.flipStart) / (tm.flipEnd - tm.flipStart)));
   const zoomT = easeInOutCubic(clamp((t - tm.zoomStart) / (tm.zoomEnd - tm.zoomStart)));
   const cardText = 1 - clamp((t - tm.zoomStart) / tm.textFade);
   // Big enough for the badge, medallion, footer and inner frame to leave the picture on every format.
-  const fill = Math.max(W / ((w - 120) * S), H / ((h - 200) * S)) * 1.08;
-  const zoom = (0.7 + 0.3 * appearT) * (1 + (fill - 1) * zoomT);
-  const cos = Math.cos(Math.PI * (1 - flipT));
-
-  ctx.save();
+  const fill = Math.max(W / ((g.w - 120) * S), H / ((g.h - 200) * S)) * 1.08;
+  const zoom = 1 + (fill - 1) * zoomT;
   // The card dissolves at the end of the zoom: only the text stays, over the video.
   const dissolve = 1 - clamp((t - (tm.zoomStart + tm.zoomEnd) / 2) / (tm.zoomEnd - tm.zoomStart));
-  ctx.globalAlpha = exitAlpha * clamp(t / (tm.appear * 0.5)) * dissolve;
-  ctx.translate(W / 2, H / 2);
-  ctx.scale(Math.max(0.02, Math.abs(cos)) * zoom * S, zoom * S);
-  if (zoomT < 1) cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
-  if (cos >= 0) paintFront(rc, item, w, h, r, p, -1, cardText);
-  else paintBack(rc, w, h, r, p, back);
-  ctx.restore();
+  if (dissolve > 0) {
+    ctx.save();
+    ctx.globalAlpha *= dissolve;
+    aroundCenter(rc, zoom, zoom, 0, () => drawEntrance(rc, item, g, 0, cardText));
+    ctx.restore();
+  }
 
   if (t < tm.text) return;
   drawChapterTitle(
@@ -623,10 +705,6 @@ function drawZoomIntertitle(
         style: CARD_TEXT_ANIMATIONS.some((a) => a.id === item.textAnim) ? item.textAnim! : 'slide-mask',
       },
     },
-    {
-      kicker: item.badge ?? '',
-      title: item.title ?? '',
-      subtitle: item.body ?? '',
-    },
+    { kicker: item.badge ?? '', title: item.title ?? '', subtitle: item.body ?? '' },
   );
 }

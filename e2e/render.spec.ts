@@ -75,6 +75,7 @@ const ANIMATIONS: [string, string][] = [
   ['lower-third', 'elastic-pop'],
   ['playing-card', 'fan-snap'],
   ['playing-card', 'card-flip-3d'],
+  ['playing-card', 'back-reveal'],
 ];
 for (const [templateId, animation] of ANIMATIONS) {
   test(`${templateId} — animation ${animation}`, async ({ page }) => {
