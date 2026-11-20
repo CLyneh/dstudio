@@ -281,7 +281,7 @@ function paintFront(
   ctx.font = titleFont(rc, 900, titleSize);
   const measured = ctx.measureText(title).width;
   if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
-  const titleY = 0;
+  const titleY = body ? -44 : -20;
 
   const logo = rc.logo.image;
   if (logo && rc.style.logo.show && rc.style.logo.placement === 'above-text') {

@@ -38,4 +38,4 @@ préférence ou manière de travailler apparaît.
 - Outil pour l'**équipe interne**, utilisateurs débutants : chaque écran doit se comprendre sans formation.
 - Références : `docs/reference/motion-studio-v2.html` (référence actuelle) et `docs/reference/gemini-simulator.html` (v1).
 - La maquette V1 (en attente de validation) : `docs/maquette/maquette-v1.html`, régénérée par `npm run mockup`
-  (elle utilise le vrai moteur de rendu). Lien artefact : https://claude.ai/artifact/EoFAQ9JvNTfTZmZy8vCfWM
+  (elle utilise le vrai moteur de rendu). Lien artefact : https://claude.ai/artifact/J4UYij6GaXuCtmSeqjnALe
