@@ -24,6 +24,8 @@ export interface ChapterText {
   kicker: string;
   title: string;
   subtitle: string;
+  /** Subtitle color; defaults to the light grey of Motion Studio v2. */
+  subtitleColor?: string;
 }
 
 export function chapterPhases(duration: number) {
@@ -77,7 +79,7 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.font = titleFont(rc, 500, subSize);
-    ctx.fillStyle = SUB_COLOR;
+    ctx.fillStyle = text.subtitleColor ?? SUB_COLOR;
     shadow(rc, withShadow);
     ctx.fillText(sub, cx, y);
     ctx.restore();
@@ -200,7 +202,7 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     ctx.fillText(main, cx, cy + mainOffset + (1 - textT) * 18 * S);
     if (sub) {
       ctx.font = titleFont(rc, 500, subSize);
-      ctx.fillStyle = SUB_COLOR;
+      ctx.fillStyle = text.subtitleColor ?? SUB_COLOR;
       ctx.fillText(sub, cx, cy + boxH / 2 - 42 * S);
     }
     ctx.restore();

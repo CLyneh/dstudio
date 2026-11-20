@@ -530,7 +530,7 @@
         [
           'v1',
           'Carte à jouer · 4 finitions, 4 animations 3D',
-          'Noir collector, Ivoire, Néon arcade, Minimaliste ; Retournement, Tirage, Éventail, Lévitation holo. 4 cartes prêtes à l’emploi.',
+          'Noir collector, Ivoire, Néon arcade, Minimaliste ; Zoom & intertitre, Retournement, Tirage, Éventail, Lévitation holo. 4 cartes prêtes à l’emploi.',
           false,
         ],
         [

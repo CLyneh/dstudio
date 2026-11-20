@@ -5,9 +5,15 @@ import { drawLogo, isWatermark } from '@/engine/logo';
 import { clamp } from '@/engine/math';
 import type { ItemContent, RenderContext } from '@/engine/types';
 import type { Choice } from '../types';
+import { drawChapterTitle } from '../shared/chapterRenderer';
 import { cased, interFont, onAccent, titleFont } from '../shared/typography';
 
 export const CARD_ANIMATIONS: Choice[] = [
+  {
+    id: 'zoom-intertitle',
+    label: 'Zoom & intertitre',
+    description: 'La carte apparaît, zoome, puis le texte',
+  },
   { id: 'card-flip-3d', label: 'Retournement 3D', description: 'Dos géométrique → face + reflet' },
   { id: 'deal-slide', label: 'Tirage de paquet', description: 'Glisse depuis la pioche + rebond' },
   { id: 'fan-snap', label: 'Distribution éventail', description: 'Paquet en éventail & claquement' },
@@ -209,6 +215,7 @@ function paintFront(
   r: number,
   p: Palette,
   sheen: number,
+  showText = true,
 ) {
   const { ctx, style } = rc;
   const accent = p.ornament;
@@ -300,49 +307,51 @@ function paintFront(
     ctx.restore();
   }
 
-  // Title sits at the vertical center of the card; the brand logo (when placed "above text") goes above it.
-  let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
-  ctx.font = titleFont(rc, 900, titleSize);
-  const measured = ctx.measureText(title).width;
-  if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
-  const titleY = body ? -44 : -20;
+  if (showText) {
+    // Title sits at the vertical center of the card; the brand logo (when placed "above text") goes above it.
+    let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
+    ctx.font = titleFont(rc, 900, titleSize);
+    const measured = ctx.measureText(title).width;
+    if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
+    const titleY = body ? -44 : -20;
 
-  const logo = rc.logo.image;
-  if (logo && rc.style.logo.show && rc.style.logo.placement === 'above-text') {
-    const zoneTop = topBarY + 46;
-    const zoneBottom = titleY - titleSize * 0.6 - 30;
-    const zoneH = zoneBottom - zoneTop;
-    const size = Math.min(1.2, rc.style.logo.size);
-    const ratio = Math.min(((w - 140) * size) / logo.width, (zoneH * 0.8 * size) / logo.height);
-    const dW = logo.width * ratio;
-    const dH = logo.height * ratio;
+    const logo = rc.logo.image;
+    if (logo && rc.style.logo.show && rc.style.logo.placement === 'above-text') {
+      const zoneTop = topBarY + 46;
+      const zoneBottom = titleY - titleSize * 0.6 - 30;
+      const zoneH = zoneBottom - zoneTop;
+      const size = Math.min(1.2, rc.style.logo.size);
+      const ratio = Math.min(((w - 140) * size) / logo.width, (zoneH * 0.8 * size) / logo.height);
+      const dW = logo.width * ratio;
+      const dH = logo.height * ratio;
+      ctx.save();
+      ctx.globalAlpha *= rc.style.logo.opacity;
+      ctx.drawImage(logo, -dW / 2, zoneTop + (zoneH - dH) / 2, dW, dH);
+      ctx.restore();
+    }
+
     ctx.save();
-    ctx.globalAlpha *= rc.style.logo.opacity;
-    ctx.drawImage(logo, -dW / 2, zoneTop + (zoneH - dH) / 2, dW, dH);
-    ctx.restore();
-  }
-
-  ctx.save();
-  ctx.font = titleFont(rc, 900, titleSize);
-  ctx.fillStyle = p.titleColor;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(title, 0, titleY);
-  const sepY = titleY + titleSize * 0.68;
-  ctx.fillStyle = accent;
-  roundRect(ctx, -36, sepY, 72, 5, 2.5);
-  ctx.fill();
-  ctx.restore();
-
-  if (body) {
-    const bodySize = Math.round(23 * Math.min(1.2, k));
-    ctx.save();
-    ctx.font = interFont(500, bodySize);
-    ctx.fillStyle = p.bodyColor;
+    ctx.font = titleFont(rc, 900, titleSize);
+    ctx.fillStyle = p.titleColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    wrapBelow(rc, body, sepY + 48, w - 84, bodySize * 1.38, 4);
+    ctx.fillText(title, 0, titleY);
+    const sepY = titleY + titleSize * 0.68;
+    ctx.fillStyle = accent;
+    roundRect(ctx, -36, sepY, 72, 5, 2.5);
+    ctx.fill();
     ctx.restore();
+
+    if (body) {
+      const bodySize = Math.round(23 * Math.min(1.2, k));
+      ctx.save();
+      ctx.font = interFont(500, bodySize);
+      ctx.fillStyle = p.bodyColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      wrapBelow(rc, body, sepY + 48, w - 84, bodySize * 1.38, 4);
+      ctx.restore();
+    }
   }
 
   const footerY = h / 2 - 42;
@@ -434,6 +443,12 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
   ctx.save();
   ctx.globalAlpha = exitAlpha;
 
+  if (anim === 'zoom-intertitle') {
+    drawZoomIntertitle(rc, item, w, h, r, p, exitAlpha);
+    ctx.restore();
+    return;
+  }
+
   if (anim === 'deal-slide') {
     const dealT = easeOutBack(clamp(t / Math.min(0.78, duration * 0.25)));
     const slideX = ((1 - dealT) * (portrait ? 480 : 720) - easeOut * 650) * S;
@@ -494,4 +509,63 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
   if (!isWatermark(rc) && style.logo.placement !== 'above-text') {
     drawLogo(rc, { topY: cy - (h / 2) * S, badgeLeftX: cx - (w / 2) * S, badgeY: cy - (h / 2 - 50) * S });
   }
+}
+
+/** Timings of "Zoom & intertitre" (seconds, shortened on short clips). */
+function zoomTimings(duration: number) {
+  const k = Math.min(1, duration / 4.5);
+  return { appear: 0.55 * k, zoomStart: 0.75 * k, zoomEnd: 1.45 * k, text: 1.3 * k };
+}
+
+/**
+ * The card pops in (badge, number and footer only), zooms until it fills the frame, then the
+ * title and question come in the middle exactly like a chapter intertitle (slide & mask).
+ */
+function drawZoomIntertitle(
+  rc: RenderContext,
+  item: ItemContent,
+  w: number,
+  h: number,
+  r: number,
+  p: Palette,
+  exitAlpha: number,
+) {
+  const { ctx, width: W, height: H, time: t, duration, scale: S } = rc;
+  const tm = zoomTimings(duration);
+  const appearT = easeOutBack(clamp(t / tm.appear));
+  const zoomT = easeInOutCubic(clamp((t - tm.zoomStart) / (tm.zoomEnd - tm.zoomStart)));
+  // Big enough for the badge, medallion, footer and inner frame to leave the picture on every format.
+  const fill = Math.max(W / ((w - 120) * S), H / ((h - 200) * S)) * 1.08;
+  const zoom = (0.7 + 0.3 * appearT) * (1 + (fill - 1) * zoomT);
+
+  ctx.save();
+  ctx.globalAlpha = exitAlpha * clamp(t / (tm.appear * 0.5));
+  ctx.translate(W / 2, H / 2);
+  ctx.scale(zoom * S, zoom * S);
+  if (zoomT < 1) cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
+  paintFront(rc, item, w, h, r, p, -1, false);
+  ctx.restore();
+
+  if (t < tm.text) return;
+  drawChapterTitle(
+    {
+      ...rc,
+      time: t - tm.text,
+      duration: duration - tm.text,
+      shadows: false,
+      style: {
+        ...rc.style,
+        textColor: p.titleColor,
+        accent: p.ornament,
+        logo: { ...rc.style.logo, show: false },
+      },
+      animation: { ...rc.animation, style: 'slide-mask' },
+    },
+    {
+      kicker: item.badge ?? '',
+      title: item.title ?? '',
+      subtitle: item.body ?? '',
+      subtitleColor: p.bodyColor,
+    },
+  );
 }
