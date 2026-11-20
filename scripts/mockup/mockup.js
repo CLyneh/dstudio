@@ -143,7 +143,10 @@
     }
     for (const f of t.fields) {
       const v = esc(p.content[f.key]);
-      h += `<div class="field"><label for="f_${f.key}">${esc(f.label)}</label>${
+      const off = f.optional && p.content[f.key + 'Off'] === '1';
+      if (f.optional)
+        h += `<label class="check"><input type="checkbox" id="t_${f.key}" data-off="${f.key}" ${off ? '' : 'checked'}><span>${esc(f.optional)}</span></label>`;
+      h += `<div class="field" id="w_${f.key}" ${off ? 'hidden' : ''}><label for="f_${f.key}">${esc(f.label)}</label>${
         f.multiline
           ? `<textarea id="f_${f.key}" data-key="${f.key}" style="font-family:var(--f-ui);font-size:14px;min-height:80px">${v}</textarea>`
           : `<input type="text" id="f_${f.key}" data-key="${f.key}" value="${v}" placeholder="${esc(f.placeholder)}">`
@@ -229,6 +232,11 @@
     });
     panel.addEventListener('change', (e) => {
       const el = e.target;
+      if (el.dataset.off) {
+        update({ content: { [el.dataset.off + 'Off']: el.checked ? '' : '1' } });
+        const w = document.getElementById('w_' + el.dataset.off);
+        if (w) w.hidden = !el.checked;
+      }
       if (el.id === 'fontSel') update({ style: { fontId: el.value } });
       if (el.id === 'logoPlace') update({ style: { logo: { placement: el.value } } });
       if (el.id === 'logoMotion') update({ style: { logo: { motion: el.value } } });
