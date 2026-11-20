@@ -61,7 +61,7 @@ Sens des dépendances (à respecter) : `engine` ← `templates` ← `project` �
 3. Tailles en **pixels de référence × `rc.scale`** (référence = image dont le petit côté fait 1080 px, comme
    Motion Studio). Jamais de px bruts : c'est ce qui rend les 4 formats (16:9, 9:16, 1:1, 4:5) automatiques.
    Les ombres canvas (`shadowBlur`, `shadowOffset*`) ignorent les transformations : les multiplier par `rc.scale`.
-4. Les zones masquées par Instagram / TikTok (`VERTICAL_UNSAFE`) sont affichées dans l'aperçu ; le placement
+4. Les zones masquées par Instagram / TikTok (`VERTICAL_UNSAFE`) s'affichent dans l'aperçu à la demande ; le placement
    des modèles suit la DA de référence (ne pas le déplacer sans accord).
 5. Toute donnée venant de l'extérieur (fichier importé, localStorage, JSON de `presets/`) passe par une fonction
    `parse…` qui valide et répare. Une vieille sauvegarde ne doit jamais faire planter l'appli.

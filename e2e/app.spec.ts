@@ -56,10 +56,13 @@ test('the export step recommends a format for the chosen editing software', asyn
   await expect(page.getByTestId('export-filename')).toHaveText('intro_un-mot-deux-reponses_16x9.mp4');
 });
 
-test('switching to 9:16 turns on the safe zones', async ({ page }) => {
+test('9:16 shows a vertical preview; safe zones stay optional', async ({ page }) => {
   await page.locator('.tpl', { hasText: 'Synthé' }).first().click();
   await page.getByRole('button', { name: '9:16' }).click();
-  await expect(page.getByRole('button', { name: /Zones sûres/ })).toHaveAttribute('aria-pressed', 'true');
+  const safe = page.getByRole('button', { name: /Zones sûres/ });
+  await expect(safe).toHaveAttribute('aria-pressed', 'false');
+  await safe.click();
+  await expect(safe).toHaveAttribute('aria-pressed', 'true');
   const box = await page.getByTestId('preview-canvas').boundingBox();
   expect(box!.height).toBeGreaterThan(box!.width);
 });

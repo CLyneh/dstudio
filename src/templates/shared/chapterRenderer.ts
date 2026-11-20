@@ -53,8 +53,8 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     [main],
     W * (portrait ? 0.86 : 0.84),
   );
-  const topSize = Math.round((portrait ? 26 : 24) * Math.min(1.2, style.textScale) * S);
-  const subSize = Math.round((portrait ? 32 : 30) * Math.min(1.2, style.textScale) * S);
+  const topSize = Math.round((portrait ? 30 : 24) * Math.min(1.2, style.textScale) * S);
+  const subSize = Math.round((portrait ? 36 : 30) * Math.min(1.2, style.textScale) * S);
 
   if (isWatermark(rc)) drawLogo(rc);
   if (exitAlpha <= 0.001) return;
@@ -71,7 +71,7 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     setLetterSpacing(ctx, spacing * S);
     ctx.fillStyle = accent;
     shadow(rc);
-    ctx.fillText(top, cx + xShift * S, y);
+    ctx.fillText(top, cx + xShift * S, y, W * 0.9);
     ctx.restore();
   };
   const drawSub = (alpha: number, y: number, withShadow = true) => {
@@ -81,7 +81,9 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     ctx.font = titleFont(rc, 500, subSize);
     ctx.fillStyle = text.subtitleColor ?? SUB_COLOR;
     shadow(rc, withShadow);
-    ctx.fillText(sub, cx, y);
+    // Long subtitles (e.g. a card question) wrap instead of leaving the frame.
+    const lines = wrapLines(ctx, sub, W * 0.86, 3);
+    lines.forEach((line, i) => ctx.fillText(line, cx, y + i * subSize * 1.3, W * 0.9));
     ctx.restore();
   };
 
@@ -244,4 +246,23 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
       badgeY: topY,
     });
   }
+}
+
+/** Splits `text` into lines no wider than `maxWidth` (at most `maxLines`; the last one may be compressed). */
+function wrapLines(ctx: RenderContext['ctx'], text: string, maxWidth: number, maxLines: number): string[] {
+  if (ctx.measureText(text).width <= maxWidth) return [text];
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (!current || ctx.measureText(test).width <= maxWidth) current = test;
+    else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  return [...lines.slice(0, maxLines - 1), lines.slice(maxLines - 1).join(' ')];
 }

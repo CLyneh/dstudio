@@ -593,7 +593,9 @@ function drawZoomIntertitle(
   const cos = Math.cos(Math.PI * (1 - flipT));
 
   ctx.save();
-  ctx.globalAlpha = exitAlpha * clamp(t / (tm.appear * 0.5));
+  // The card dissolves at the end of the zoom: only the text stays, over the video.
+  const dissolve = 1 - clamp((t - (tm.zoomStart + tm.zoomEnd) / 2) / (tm.zoomEnd - tm.zoomStart));
+  ctx.globalAlpha = exitAlpha * clamp(t / (tm.appear * 0.5)) * dissolve;
   ctx.translate(W / 2, H / 2);
   ctx.scale(Math.max(0.02, Math.abs(cos)) * zoom * S, zoom * S);
   if (zoomT < 1) cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
@@ -607,20 +609,13 @@ function drawZoomIntertitle(
       ...rc,
       time: t - tm.text,
       duration: duration - tm.text,
-      shadows: false,
-      style: {
-        ...rc.style,
-        textColor: p.titleColor,
-        accent: p.ornament,
-        logo: { ...rc.style.logo, show: false },
-      },
+      style: { ...rc.style, logo: { ...rc.style.logo, show: false } },
       animation: { ...rc.animation, style: 'slide-mask' },
     },
     {
       kicker: item.badge ?? '',
       title: item.title ?? '',
       subtitle: item.body ?? '',
-      subtitleColor: p.bodyColor,
     },
   );
 }

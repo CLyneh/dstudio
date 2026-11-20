@@ -665,9 +665,7 @@
     segBind($('#ratioSeg'), (v) => {
       update({ format: v });
       if (v === '9:16' && !S.safe) {
-        S.safe = true;
-        $('#safeBtn').setAttribute('aria-pressed', 'true');
-        toast('Zones sûres activées : évite d’y placer du texte');
+        toast('Astuce : « Zones sûres » montre ce que cache l’interface Instagram / TikTok');
       }
     });
     segBind($('#bgSeg'), (v) => (S.bg = v));
