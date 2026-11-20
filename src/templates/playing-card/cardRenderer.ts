@@ -31,7 +31,6 @@ interface Palette {
   titleColor: string;
   bodyColor: string;
   footerColor: string;
-  artBoxBg: string;
   backPrimary: string;
   backSecondary: string;
 }
@@ -48,7 +47,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: '#09090B',
       bodyColor: '#3F3F46',
       footerColor: '#71717A',
-      artBoxBg: 'rgba(24, 24, 27, 0.05)',
       backPrimary: '#18181B',
       backSecondary: '#27272A',
     };
@@ -64,7 +62,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: textColor,
       bodyColor: '#E2E8F0',
       footerColor: '#38BDF8',
-      artBoxBg: 'rgba(56, 189, 248, 0.08)',
       backPrimary: '#0B0F1E',
       backSecondary: '#1E1B4B',
     };
@@ -80,7 +77,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: '#09090B',
       bodyColor: '#18181B',
       footerColor: '#52525B',
-      artBoxBg: 'rgba(9, 9, 11, 0.04)',
       backPrimary: '#09090B',
       backSecondary: '#18181B',
     };
@@ -95,17 +91,16 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
     titleColor: textColor,
     bodyColor: '#CBD5E1',
     footerColor: '#94A3B8',
-    artBoxBg: 'rgba(255, 255, 255, 0.03)',
     backPrimary: '#0F121C',
     backSecondary: '#181C2B',
   };
 }
 
-/** Centered paragraph, up to `maxLines` lines. */
-function wrapCentered(
+/** Horizontally centered paragraph whose first line is at `firstY`, up to `maxLines` lines. */
+function wrapBelow(
   rc: RenderContext,
   text: string,
-  centerY: number,
+  firstY: number,
   maxWidth: number,
   lineHeight: number,
   maxLines: number,
@@ -124,8 +119,7 @@ function wrapCentered(
     }
   }
   if (current && lines.length < maxLines) lines.push(current);
-  const first = centerY - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, i) => ctx.fillText(line, 0, first + i * lineHeight));
+  lines.forEach((line, i) => ctx.fillText(line, 0, firstY + i * lineHeight));
 }
 
 /** Card coordinates are in "card pixels" (a 510×720 card), scaled by the caller. */
@@ -282,53 +276,28 @@ function paintFront(
     ctx.restore();
   }
 
-  // Illustration box: the brand logo when placed "above text", otherwise a small emblem.
-  const logo = rc.logo.image;
-  const hasImage = !!logo && rc.style.logo.show && rc.style.logo.placement === 'above-text';
-  const artW = w - 84;
-  const artH = Math.round(h * (hasImage ? 0.27 : 0.14));
-  const artY = -h / 2 + 106;
-  roundRect(ctx, -artW / 2, artY, artW, artH, 16);
-  ctx.fillStyle = p.artBoxBg;
-  ctx.fill();
-  ctx.strokeStyle = hexToRgba(accent, 0.25);
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  if (hasImage && logo) {
-    const size = Math.min(1.2, rc.style.logo.size);
-    const ratio = Math.min(((artW - 28) * size) / logo.width, ((artH - 22) * size) / logo.height);
-    const dW = logo.width * ratio;
-    const dH = logo.height * ratio;
-    ctx.save();
-    ctx.globalAlpha *= rc.style.logo.opacity;
-    ctx.drawImage(logo, -dW / 2, artY + (artH - dH) / 2, dW, dH);
-    ctx.restore();
-  } else {
-    const ey = artY + artH / 2;
-    ctx.save();
-    ctx.strokeStyle = hexToRgba(accent, 0.45);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-90, ey);
-    ctx.lineTo(-28, ey);
-    ctx.moveTo(28, ey);
-    ctx.lineTo(90, ey);
-    ctx.stroke();
-    ctx.translate(0, ey);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = accent;
-    ctx.fillRect(-10, -10, 20, 20);
-    ctx.restore();
-  }
-
-  const contentTop = artY + artH + 26;
-  const contentBottom = h / 2 - 74;
-  const mid = (contentTop + contentBottom) / 2;
+  // Title sits at the vertical center of the card; the brand logo (when placed "above text") goes above it.
   let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
   ctx.font = titleFont(rc, 900, titleSize);
   const measured = ctx.measureText(title).width;
   if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
-  const titleY = body ? mid - 52 : mid;
+  const titleY = 0;
+
+  const logo = rc.logo.image;
+  if (logo && rc.style.logo.show && rc.style.logo.placement === 'above-text') {
+    const zoneTop = topBarY + 46;
+    const zoneBottom = titleY - titleSize * 0.6 - 30;
+    const zoneH = zoneBottom - zoneTop;
+    const size = Math.min(1.2, rc.style.logo.size);
+    const ratio = Math.min(((w - 140) * size) / logo.width, (zoneH * 0.8 * size) / logo.height);
+    const dW = logo.width * ratio;
+    const dH = logo.height * ratio;
+    ctx.save();
+    ctx.globalAlpha *= rc.style.logo.opacity;
+    ctx.drawImage(logo, -dW / 2, zoneTop + (zoneH - dH) / 2, dW, dH);
+    ctx.restore();
+  }
+
   ctx.save();
   ctx.font = titleFont(rc, 900, titleSize);
   ctx.fillStyle = p.titleColor;
@@ -348,7 +317,7 @@ function paintFront(
     ctx.fillStyle = p.bodyColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    wrapCentered(rc, body, sepY + 58, w - 84, bodySize * 1.38, 4);
+    wrapBelow(rc, body, sepY + 48, w - 84, bodySize * 1.38, 4);
     ctx.restore();
   }
 
