@@ -65,3 +65,10 @@ Nouvelle dépendance `firebase`, chargée seulement quand la configuration est p
 Limite : GitHub Pages sert les fichiers à tous, la barrière est dans l'interface. Alternative plus stricte
 proposée et écartée par la personne qui pilote le projet : Cloudflare Pages + Cloudflare Access.
 Rappel : GitHub Pages sur un dépôt privé demande un abonnement GitHub payant (Pro).
+
+## 2026-11-20 — Agrandissement automatique en format vertical
+
+Motion Studio v2 dessinait tout à la même taille en 16:9 et en 9:16 : sur téléphone, textes et cartes
+paraissaient petits. À la demande de la personne qui pilote le projet, `designScale` agrandit les
+formats hauts : ×1,4 en 9:16, ×1,13 en 4:5, rien en 1:1 et 16:9 (`VERTICAL_BOOST`). Les titres longs
+restent limités à la largeur de l'écran.
