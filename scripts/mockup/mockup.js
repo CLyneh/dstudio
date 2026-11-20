@@ -170,6 +170,15 @@
     let st = '';
     if (t.variants)
       st += `<div class="field"><span class="lbl">${esc(t.variants.label)}</span><div class="choices">${choiceButtons(t.variants.options, p.style.variant, 'data-variant')}</div></div>`;
+    for (const o of t.options ?? []) {
+      const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
+      st += `<div class="field"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
+        .map(
+          (c) =>
+            `<button type="button" class="choice" data-opt="${o.key}" data-optval="${c.id}" aria-pressed="${c.id === cur}">${esc(c.label)}<small>${esc(c.description)}</small></button>`,
+        )
+        .join('')}</div></div>`;
+    }
     const accents = D.brandPalette(brand);
     st += `<div class="field"><span class="lbl">Couleur d'accent <a class="link-btn" href="#marque" style="font-size:12px">Gérer le kit →</a></span><div class="swatches">${accents
       .map(
@@ -248,6 +257,7 @@
         update({ content: T().quickFills[+b.dataset.quick].content });
         buildPanels();
       } else if (b.dataset.variant) update({ style: { variant: b.dataset.variant } });
+      else if (b.dataset.opt) update({ content: { [b.dataset.opt]: b.dataset.optval } });
       else if (b.dataset.accent) update({ style: { accent: b.dataset.accent } });
       else if (b.dataset.textcolor) update({ style: { textColor: b.dataset.textcolor } });
       else if (b.dataset.anim) {
@@ -298,6 +308,11 @@
     $$('[data-variant]').forEach((b) =>
       b.setAttribute('aria-pressed', b.dataset.variant === p.style.variant),
     );
+    $$('[data-opt]').forEach((b) => {
+      const o = (t.options ?? []).find((x) => x.key === b.dataset.opt);
+      const cur = o && o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o?.options[0].id;
+      b.setAttribute('aria-pressed', b.dataset.optval === cur);
+    });
     $$('[data-accent]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.accent === p.style.accent));
     $$('[data-textcolor]').forEach((b) =>
       b.setAttribute('aria-pressed', b.dataset.textcolor === p.style.textColor),

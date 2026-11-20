@@ -18,6 +18,24 @@ export interface RenderRequest {
   background?: BackgroundMode;
   /** Long side in px (default 960). */
   size?: number;
+  /** Extra content (text or options such as the card back). */
+  content?: Record<string, string>;
+  /** Draw with a simple stand-in logo. */
+  withLogo?: boolean;
+}
+
+/** A small white wordmark used as a stand-in brand logo in visual tests. */
+function testLogo(): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = 400;
+  c.height = 160;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#ffffff';
+  g.font = '900 120px Inter';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText('LOGO', 200, 84);
+  return c;
 }
 
 /**
@@ -32,6 +50,7 @@ export function installTestHooks(): void {
       project.format = req.format ?? '16:9';
       if (req.variant) project.style.variant = req.variant;
       if (req.animation) project.animation.style = req.animation;
+      if (req.content) project.content = { ...project.content, ...req.content };
       const { width, height } = previewSize(project.format, req.size ?? 960);
       const canvas = document.createElement('canvas');
       canvas.width = width;
@@ -39,7 +58,7 @@ export function installTestHooks(): void {
       const ctx = canvas.getContext('2d')!;
       renderProjectFrame(ctx, width, height, project, req.time, {
         background: req.background ?? 'scene',
-        logo: { image: null },
+        logo: { image: req.withLogo ? testLogo() : null },
       });
       return canvas.toDataURL('image/png');
     },

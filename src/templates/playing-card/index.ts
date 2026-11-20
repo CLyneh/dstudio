@@ -1,7 +1,7 @@
 import { slugify } from '@/engine/text';
 import type { TemplateDefinition } from '../types';
 import { withoutHiddenFields } from '../shared/optionalFields';
-import { CARD_ANIMATIONS, CARD_VARIANTS, cardPhases, drawPlayingCard } from './cardRenderer';
+import { CARD_ANIMATIONS, CARD_BACKS, CARD_VARIANTS, cardPhases, drawPlayingCard } from './cardRenderer';
 
 export const playingCard: TemplateDefinition = {
   id: 'playing-card',
@@ -66,10 +66,11 @@ export const playingCard: TemplateDefinition = {
       },
     },
   ],
-  defaultDuration: 4.5,
+  defaultDuration: 5.5,
   supportsPosition: false,
   animations: CARD_ANIMATIONS,
   variants: { label: 'Finition de la carte', options: CARD_VARIANTS },
+  options: [{ key: 'back', label: 'Dos de la carte', options: CARD_BACKS }],
   phases: cardPhases,
   items: (content) => [withoutHiddenFields(playingCard.fields, content)],
   render: drawPlayingCard,

@@ -58,6 +58,15 @@ for (const [templateId, variant, time] of VARIANTS) {
   });
 }
 
+// Card backs, seen face down at the start of "Zoom & intertitre" (with a stand-in logo).
+for (const back of ['geometric', 'solid-logo', 'minimal']) {
+  test(`playing-card — back ${back}`, async ({ page }) => {
+    expect(
+      await frame(page, { templateId: 'playing-card', time: 0.3, content: { back }, withLogo: true }),
+    ).toMatchSnapshot(`playing-card-back-${back}.png`);
+  });
+}
+
 const ANIMATIONS: [string, string][] = [
   ['intro', 'kinetic-impact'],
   ['intro', 'editorial-card'],

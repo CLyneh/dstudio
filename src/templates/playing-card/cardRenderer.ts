@@ -20,6 +20,16 @@ export const CARD_ANIMATIONS: Choice[] = [
   { id: 'holo-float', label: 'Lévitation & holo', description: 'Inclinaison 3D & balayage brillant' },
 ];
 
+export const CARD_BACKS: Choice[] = [
+  { id: 'geometric', label: 'Losanges', description: 'Motif géométrique façon jeu de cartes' },
+  {
+    id: 'solid-logo',
+    label: 'Couleur unie + logo',
+    description: "Couleur d'accent et logo du kit au centre",
+  },
+  { id: 'minimal', label: 'Minimaliste', description: 'Fond uni et un simple trait de couleur' },
+];
+
 export const CARD_VARIANTS: Choice[] = [
   { id: 'noir-collector', label: 'Noir collector', description: 'Sombre texturé & liseré luxe' },
   { id: 'ivoire-boardgame', label: 'Ivoire jeu de société', description: 'Papier épais crème & encre' },
@@ -153,9 +163,11 @@ function wrapBelow(
 }
 
 /** Card coordinates are in "card pixels" (a 510×720 card), scaled by the caller. */
-function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palette) {
+function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palette, back: string) {
   const { ctx } = rc;
   const accent = rc.style.accent;
+  if (back === 'solid-logo') return paintSolidLogoBack(rc, w, h, r);
+  if (back === 'minimal') return paintMinimalBack(rc, w, h, r, p);
   const grad = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
   grad.addColorStop(0, p.backSecondary);
   grad.addColorStop(1, p.backPrimary);
@@ -207,6 +219,31 @@ function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palett
   ctx.restore();
 }
 
+/** Plain accent color with the brand logo in the middle (nothing else when the kit has no logo). */
+function paintSolidLogoBack(rc: RenderContext, w: number, h: number, r: number) {
+  const { ctx } = rc;
+  roundRect(ctx, -w / 2, -h / 2, w, h, r);
+  ctx.fillStyle = rc.style.accent;
+  ctx.fill();
+  const logo = rc.logo.image;
+  if (!logo) return;
+  const ratio = Math.min((w * 0.56) / logo.width, (h * 0.3) / logo.height);
+  const dW = logo.width * ratio;
+  const dH = logo.height * ratio;
+  ctx.drawImage(logo, -dW / 2, -dH / 2, dW, dH);
+}
+
+/** Same flat color as the front, one short accent stroke: nothing that says "playing card". */
+function paintMinimalBack(rc: RenderContext, w: number, h: number, r: number, p: Palette) {
+  const { ctx } = rc;
+  roundRect(ctx, -w / 2, -h / 2, w, h, r);
+  ctx.fillStyle = p.bgTop;
+  ctx.fill();
+  ctx.fillStyle = p.ornament;
+  roundRect(ctx, -36, -2.5, 72, 5, 2.5);
+  ctx.fill();
+}
+
 function paintFront(
   rc: RenderContext,
   item: ItemContent,
@@ -215,7 +252,7 @@ function paintFront(
   r: number,
   p: Palette,
   sheen: number,
-  showText = true,
+  textAlpha = 1,
 ) {
   const { ctx, style } = rc;
   const accent = p.ornament;
@@ -307,7 +344,9 @@ function paintFront(
     ctx.restore();
   }
 
-  if (showText) {
+  if (textAlpha > 0) {
+    ctx.save();
+    ctx.globalAlpha *= textAlpha;
     // Title sits at the vertical center of the card; the brand logo (when placed "above text") goes above it.
     let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
     ctx.font = titleFont(rc, 900, titleSize);
@@ -352,6 +391,7 @@ function paintFront(
       wrapBelow(rc, body, sepY + 48, w - 84, bodySize * 1.38, 4);
       ctx.restore();
     }
+    ctx.restore();
   }
 
   const footerY = h / 2 - 42;
@@ -435,6 +475,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
   const r = 34;
   const p = cardPalette(style.variant, style.accent, style.textColor);
   const anim = rc.animation.style;
+  const back = CARD_BACKS.some((b) => b.id === item.back) ? item.back! : CARD_BACKS[0]!.id;
   const sheenAt = (start: number, length: number) => {
     const s = clamp((t - start) / length);
     return s > 0 && s < 1 ? s : -1;
@@ -444,7 +485,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
   ctx.globalAlpha = exitAlpha;
 
   if (anim === 'zoom-intertitle') {
-    drawZoomIntertitle(rc, item, w, h, r, p, exitAlpha);
+    drawZoomIntertitle(rc, item, w, h, r, p, back, exitAlpha);
     ctx.restore();
     return;
   }
@@ -471,7 +512,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
       ctx.rotate(side * 0.22 * open);
       ctx.scale(0.92 * S, 0.92 * S);
       cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.45)', 24, 0, 12);
-      paintBack(rc, w, h, r, p);
+      paintBack(rc, w, h, r, p, back);
       ctx.restore();
     });
     const zoom = (0.76 + 0.24 * snapT) * (1 - easeOut * 0.1);
@@ -502,7 +543,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.scale(Math.max(0.02, Math.abs(cos)) * lift * S, lift * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.58)', 45, Math.sin(angle) * 28, 24);
     if (cos >= 0) paintFront(rc, item, w, h, r, p, sheenAt(0.65, 0.85));
-    else paintBack(rc, w, h, r, p);
+    else paintBack(rc, w, h, r, p, back);
   }
   ctx.restore();
 
@@ -513,13 +554,22 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
 
 /** Timings of "Zoom & intertitre" (seconds, shortened on short clips). */
 function zoomTimings(duration: number) {
-  const k = Math.min(1, duration / 4.5);
-  return { appear: 0.55 * k, zoomStart: 0.75 * k, zoomEnd: 1.45 * k, text: 1.3 * k };
+  const k = Math.min(1, duration / 5.5);
+  return {
+    appear: 0.45 * k,
+    flipStart: 0.9 * k,
+    flipEnd: 1.5 * k,
+    zoomStart: 2.0 * k,
+    zoomEnd: 2.7 * k,
+    textFade: 0.25 * k,
+    text: 2.5 * k,
+  };
 }
 
 /**
- * The card pops in (badge, number and footer only), zooms until it fills the frame, then the
- * title and question come in the middle exactly like a chapter intertitle (slide & mask).
+ * The card pops in face down in the middle of the frame, flips to show its front (title included),
+ * zooms until it fills the frame, then the title and question come in the middle exactly like a
+ * chapter intertitle (slide & mask).
  */
 function drawZoomIntertitle(
   rc: RenderContext,
@@ -528,22 +578,27 @@ function drawZoomIntertitle(
   h: number,
   r: number,
   p: Palette,
+  back: string,
   exitAlpha: number,
 ) {
   const { ctx, width: W, height: H, time: t, duration, scale: S } = rc;
   const tm = zoomTimings(duration);
   const appearT = easeOutBack(clamp(t / tm.appear));
+  const flipT = easeInOutCubic(clamp((t - tm.flipStart) / (tm.flipEnd - tm.flipStart)));
   const zoomT = easeInOutCubic(clamp((t - tm.zoomStart) / (tm.zoomEnd - tm.zoomStart)));
+  const cardText = 1 - clamp((t - tm.zoomStart) / tm.textFade);
   // Big enough for the badge, medallion, footer and inner frame to leave the picture on every format.
   const fill = Math.max(W / ((w - 120) * S), H / ((h - 200) * S)) * 1.08;
   const zoom = (0.7 + 0.3 * appearT) * (1 + (fill - 1) * zoomT);
+  const cos = Math.cos(Math.PI * (1 - flipT));
 
   ctx.save();
   ctx.globalAlpha = exitAlpha * clamp(t / (tm.appear * 0.5));
   ctx.translate(W / 2, H / 2);
-  ctx.scale(zoom * S, zoom * S);
+  ctx.scale(Math.max(0.02, Math.abs(cos)) * zoom * S, zoom * S);
   if (zoomT < 1) cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
-  paintFront(rc, item, w, h, r, p, -1, false);
+  if (cos >= 0) paintFront(rc, item, w, h, r, p, -1, cardText);
+  else paintBack(rc, w, h, r, p, back);
   ctx.restore();
 
   if (t < tm.text) return;

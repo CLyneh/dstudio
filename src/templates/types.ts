@@ -30,6 +30,14 @@ export interface Choice {
   description: string;
 }
 
+/** Extra visual choice stored in the content under `key` (e.g. the card back design). */
+export interface TemplateOption {
+  key: string;
+  label: string;
+  /** The first one is the default. */
+  options: Choice[];
+}
+
 /** Ready-made text content the user can apply in one click. */
 export interface QuickFill {
   label: string;
@@ -53,6 +61,8 @@ export interface TemplateDefinition {
   animations: Choice[];
   /** Visual variants (card style, card finish…); the first is the default. */
   variants?: { label: string; options: Choice[] };
+  /** Other visual choices shown in the Style step. */
+  options?: TemplateOption[];
   /** Entrance end and exit start (seconds) for the timeline colors. */
   phases(duration: number): { inEnd: number; outStart: number };
   /** One entry per output clip. Single templates return [content]. */
