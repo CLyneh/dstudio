@@ -19,6 +19,7 @@ export const CARD_VARIANTS: Choice[] = [
   { id: 'ivoire-boardgame', label: 'Ivoire jeu de société', description: 'Papier épais crème & encre' },
   { id: 'neon-arcade', label: 'Néon arcade', description: 'Halo lumineux & grille cyber' },
   { id: 'minimal-bmc', label: 'Minimaliste blanc', description: 'Façon Blanc Manger Coco' },
+  { id: 'solid-color', label: 'Couleur unie', description: "Carte pleine à la couleur d'accent" },
 ];
 
 interface Palette {
@@ -33,9 +34,32 @@ interface Palette {
   footerColor: string;
   backPrimary: string;
   backSecondary: string;
+  /** Separator, corner diamonds and footer rule. */
+  ornament: string;
 }
 
 function cardPalette(theme: string, accent: string, textColor: string): Palette {
+  return { ornament: accent, ...basePalette(theme, accent, textColor) };
+}
+
+function basePalette(theme: string, accent: string, textColor: string): Omit<Palette, 'ornament'> | Palette {
+  if (theme === 'solid-color') {
+    const ink = onAccent(accent);
+    return {
+      bgTop: accent,
+      bgBottom: accent,
+      outerBorder: accent,
+      innerBorder: hexToRgba(ink, 0.35),
+      badgeBg: ink,
+      badgeText: accent,
+      titleColor: ink,
+      bodyColor: ink,
+      footerColor: hexToRgba(ink, 0.8),
+      backPrimary: '#0F121C',
+      backSecondary: '#181C2B',
+      ornament: ink,
+    };
+  }
   if (theme === 'ivoire-boardgame') {
     return {
       bgTop: '#FAF7F0',
@@ -187,7 +211,7 @@ function paintFront(
   sheen: number,
 ) {
   const { ctx, style } = rc;
-  const accent = style.accent;
+  const accent = p.ornament;
   const k = style.textScale;
   const badge = cased(rc, item.badge);
   const num = cased(rc, item.number);

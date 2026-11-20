@@ -50,6 +50,7 @@ const VARIANTS: [string, string, number][] = [
   ['playing-card', 'ivoire-boardgame', 2.5],
   ['playing-card', 'neon-arcade', 2.5],
   ['playing-card', 'minimal-bmc', 2.5],
+  ['playing-card', 'solid-color', 2.5],
 ];
 for (const [templateId, variant, time] of VARIANTS) {
   test(`${templateId} — ${variant}`, async ({ page }) => {

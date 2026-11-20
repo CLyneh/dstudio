@@ -10,6 +10,8 @@ export interface TemplateField {
   placeholder?: string;
   /** Multi-line text (card body). */
   multiline?: boolean;
+  /** Checkbox label: the field can be switched off (stored as `<key>Off` = '1' in the content). */
+  optional?: string;
 }
 
 /** Multi-item templates take one item per line in `content.list`. */

@@ -149,6 +149,24 @@
   display: grid;
   gap: 6px;
 }
+.field-group {
+  display: grid;
+  gap: 10px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
 .label {
   font-size: 12px;
   font-weight: 700;

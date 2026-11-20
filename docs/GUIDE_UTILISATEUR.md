@@ -37,7 +37,9 @@ Fond **noir** ou **vert** → le fichier est un MP4 classique (pas de transparen
 - **Plusieurs synthés d'un coup** : modèle « Synthés en lot », une personne par ligne au format
   `Nom | Fonction`. Tu peux coller deux colonnes depuis Excel ou Google Sheets.
 - **Carte à jouer** : choisis un des 4 modèles prêts à l'emploi (défi, rôle secret, carte action, vrai ou faux)
-  puis adapte le texte. Avec un logo placé « Dans la carte », il s'affiche dans le cadre d'illustration.
+  puis adapte le texte. Décoche « Ajouter une question » pour une carte avec le titre seul. La finition
+  « Couleur unie » remplit la carte avec la couleur d'accent du kit. Avec un logo placé « Dans la carte »,
+  il s'affiche au-dessus du titre.
 - **Série de chapitres** : une ligne par chapitre (`Surtitre | Titre | Sous-titre`). À l'export, choisis un fichier par
   chapitre ou un seul fichier enchaîné.
 - **Préréglages d'équipe** : sur l'accueil, choisis un préréglage (ex. « Reels · dynamique ») avant de

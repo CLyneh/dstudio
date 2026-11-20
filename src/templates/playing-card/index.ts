@@ -1,5 +1,6 @@
 import { slugify } from '@/engine/text';
 import type { TemplateDefinition } from '../types';
+import { withoutHiddenFields } from '../shared/optionalFields';
 import { CARD_ANIMATIONS, CARD_VARIANTS, cardPhases, drawPlayingCard } from './cardRenderer';
 
 export const playingCard: TemplateDefinition = {
@@ -13,6 +14,7 @@ export const playingCard: TemplateDefinition = {
     {
       key: 'body',
       label: 'Question / règle',
+      optional: 'Ajouter une question',
       defaultValue: 'Quelle a été ta plus grande prise de risque cette année ?',
       multiline: true,
     },
@@ -69,7 +71,7 @@ export const playingCard: TemplateDefinition = {
   animations: CARD_ANIMATIONS,
   variants: { label: 'Finition de la carte', options: CARD_VARIANTS },
   phases: cardPhases,
-  items: (content) => [content],
+  items: (content) => [withoutHiddenFields(playingCard.fields, content)],
   render: drawPlayingCard,
   fileBase: (item) => `carte_${slugify(item.title ?? '')}`,
 };
