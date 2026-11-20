@@ -36,7 +36,7 @@ export function PreviewStage({ project, playback, onFormatChange }: Props) {
 
   const [background, setBackground] = useState<PreviewBackground>('scene');
   const [bgImage, setBgImage] = useState<BackgroundImage | null>(null);
-  const [safe, setSafe] = useState(project.format === '9:16');
+  const [safe, setSafe] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   const { width, height } = previewSize(project.format);
@@ -114,8 +114,7 @@ export function PreviewStage({ project, playback, onFormatChange }: Props) {
   const changeFormat = (format: FormatId) => {
     onFormatChange(format);
     if (format === '9:16' && !safe) {
-      setSafe(true);
-      toast('Zones sûres activées : évite d’y placer du texte');
+      toast('Astuce : « Zones sûres » montre ce que cache l’interface Instagram / TikTok');
     }
   };
 

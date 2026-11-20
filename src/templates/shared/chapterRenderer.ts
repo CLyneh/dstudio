@@ -24,6 +24,8 @@ export interface ChapterText {
   kicker: string;
   title: string;
   subtitle: string;
+  /** Subtitle color; defaults to the light grey of Motion Studio v2. */
+  subtitleColor?: string;
 }
 
 export function chapterPhases(duration: number) {
@@ -51,8 +53,8 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     [main],
     W * (portrait ? 0.86 : 0.84),
   );
-  const topSize = Math.round((portrait ? 26 : 24) * Math.min(1.2, style.textScale) * S);
-  const subSize = Math.round((portrait ? 32 : 30) * Math.min(1.2, style.textScale) * S);
+  const topSize = Math.round((portrait ? 30 : 24) * Math.min(1.2, style.textScale) * S);
+  const subSize = Math.round((portrait ? 36 : 30) * Math.min(1.2, style.textScale) * S);
 
   if (isWatermark(rc)) drawLogo(rc);
   if (exitAlpha <= 0.001) return;
@@ -69,7 +71,7 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     setLetterSpacing(ctx, spacing * S);
     ctx.fillStyle = accent;
     shadow(rc);
-    ctx.fillText(top, cx + xShift * S, y);
+    ctx.fillText(top, cx + xShift * S, y, W * 0.9);
     ctx.restore();
   };
   const drawSub = (alpha: number, y: number, withShadow = true) => {
@@ -77,9 +79,11 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.font = titleFont(rc, 500, subSize);
-    ctx.fillStyle = SUB_COLOR;
+    ctx.fillStyle = text.subtitleColor ?? SUB_COLOR;
     shadow(rc, withShadow);
-    ctx.fillText(sub, cx, y);
+    // Long subtitles (e.g. a card question) wrap instead of leaving the frame.
+    const lines = wrapLines(ctx, sub, W * 0.86, 3);
+    lines.forEach((line, i) => ctx.fillText(line, cx, y + i * subSize * 1.3, W * 0.9));
     ctx.restore();
   };
 
@@ -200,10 +204,50 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
     ctx.fillText(main, cx, cy + mainOffset + (1 - textT) * 18 * S);
     if (sub) {
       ctx.font = titleFont(rc, 500, subSize);
-      ctx.fillStyle = SUB_COLOR;
+      ctx.fillStyle = text.subtitleColor ?? SUB_COLOR;
       ctx.fillText(sub, cx, cy + boxH / 2 - 42 * S);
     }
     ctx.restore();
+  } else if (anim === 'fade') {
+    const topT = easeOutQuint(stepProgress(t, 0, 0.6));
+    const mainT = easeOutQuint(stepProgress(t, 0.15, 0.7));
+    const subT = easeOutQuint(stepProgress(t, 0.4, 0.6));
+    drawTop(exitAlpha * topT, topY);
+    ctx.save();
+    ctx.globalAlpha = exitAlpha * mainT;
+    ctx.font = titleFont(rc, 900, fontSize);
+    ctx.fillStyle = primary;
+    shadow(rc);
+    ctx.fillText(main, cx, cy);
+    ctx.fillStyle = accent;
+    roundRect(ctx, cx - 90 * S, cy + fontSize * 0.68, 180 * S, 9 * S, 4.5 * S);
+    ctx.fill();
+    ctx.restore();
+    drawSub(exitAlpha * subT, subY + 18 * S);
+  } else if (anim === 'typewriter') {
+    // Letters appear one by one (about 16 per second) with a blinking cursor, then the subtitle.
+    const chars = Array.from(main);
+    const typeTime = Math.min(1.4, chars.length / 16);
+    const typed = Math.floor(chars.length * stepProgress(t, 0.2, typeTime));
+    const done = t >= 0.2 + typeTime;
+    drawTop(exitAlpha * easeOutQuint(stepProgress(t, 0, 0.4)), topY);
+    ctx.save();
+    ctx.globalAlpha = exitAlpha;
+    ctx.font = titleFont(rc, 900, fontSize);
+    ctx.fillStyle = primary;
+    shadow(rc);
+    const fullW = ctx.measureText(main).width;
+    const shown = chars.slice(0, typed).join('');
+    ctx.textAlign = 'left';
+    ctx.fillText(shown, cx - fullW / 2, cy);
+    const cursorOn = !done || Math.floor(t * 2.5) % 2 === 0;
+    if (cursorOn && exit.raw === 0) {
+      ctx.fillStyle = accent;
+      const x = cx - fullW / 2 + ctx.measureText(shown).width + 6 * S;
+      ctx.fillRect(x, cy - fontSize * 0.45, 8 * S, fontSize * 0.9);
+    }
+    ctx.restore();
+    drawSub(exitAlpha * easeOutQuint(stepProgress(t, 0.2 + typeTime, 0.5)), subY + 18 * S);
   } else {
     // slide-mask (default)
     const topT = easeOutExpo(stepProgress(t, 0, 0.5));
@@ -242,4 +286,23 @@ export function drawChapterTitle(rc: RenderContext, text: ChapterText): void {
       badgeY: topY,
     });
   }
+}
+
+/** Splits `text` into lines no wider than `maxWidth` (at most `maxLines`; the last one may be compressed). */
+function wrapLines(ctx: RenderContext['ctx'], text: string, maxWidth: number, maxLines: number): string[] {
+  if (ctx.measureText(text).width <= maxWidth) return [text];
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (!current || ctx.measureText(test).width <= maxWidth) current = test;
+    else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  return [...lines.slice(0, maxLines - 1), lines.slice(maxLines - 1).join(' ')];
 }

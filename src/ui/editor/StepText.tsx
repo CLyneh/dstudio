@@ -2,6 +2,7 @@ import type { Position } from '@/engine/types';
 import type { Project } from '@/project/project';
 import { useStore } from '@/state/store';
 import { getTemplate } from '@/templates/registry';
+import { isFieldOn, offKey } from '@/templates/shared/optionalFields';
 import { Segmented } from '@/ui/components/Segmented';
 
 export function StepText({ project }: { project: Project }) {
@@ -30,30 +31,52 @@ export function StepText({ project }: { project: Project }) {
           </div>
         </div>
       )}
-      {template.fields.map((field) => (
-        <label className="field" key={field.key}>
-          <span className="label">{field.label}</span>
-          {field.multiline ? (
-            <textarea
-              className="textarea"
-              style={{ fontFamily: 'var(--f-ui)', fontSize: 14, minHeight: 84 }}
-              id={`field-${field.key}`}
-              value={project.content[field.key] ?? ''}
-              placeholder={field.placeholder}
-              onChange={(e) => update({ content: { [field.key]: e.target.value } }, `content.${field.key}`)}
-            />
-          ) : (
+      {template.fields.map((field) => {
+        const on = isFieldOn(field, project.content);
+        const toggle = field.optional && (
+          <label className="check" key={`${field.key}-toggle`}>
             <input
-              className="input"
-              type="text"
-              id={`field-${field.key}`}
-              value={project.content[field.key] ?? ''}
-              placeholder={field.placeholder}
-              onChange={(e) => update({ content: { [field.key]: e.target.value } }, `content.${field.key}`)}
+              type="checkbox"
+              id={`toggle-${field.key}`}
+              checked={on}
+              onChange={(e) => update({ content: { [offKey(field)]: e.target.checked ? '' : '1' } })}
             />
-          )}
-        </label>
-      ))}
+            <span>{field.optional}</span>
+          </label>
+        );
+        if (!on) return toggle;
+        return (
+          <div key={field.key} className="field-group">
+            {toggle}
+            <label className="field">
+              <span className="label">{field.label}</span>
+              {field.multiline ? (
+                <textarea
+                  className="textarea"
+                  style={{ fontFamily: 'var(--f-ui)', fontSize: 14, minHeight: 84 }}
+                  id={`field-${field.key}`}
+                  value={project.content[field.key] ?? ''}
+                  placeholder={field.placeholder}
+                  onChange={(e) =>
+                    update({ content: { [field.key]: e.target.value } }, `content.${field.key}`)
+                  }
+                />
+              ) : (
+                <input
+                  className="input"
+                  type="text"
+                  id={`field-${field.key}`}
+                  value={project.content[field.key] ?? ''}
+                  placeholder={field.placeholder}
+                  onChange={(e) =>
+                    update({ content: { [field.key]: e.target.value } }, `content.${field.key}`)
+                  }
+                />
+              )}
+            </label>
+          </div>
+        );
+      })}
       {template.list && (
         <label className="field">
           <span className="label">

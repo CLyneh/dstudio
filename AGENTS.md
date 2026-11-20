@@ -34,6 +34,7 @@ src/
                 TemplateDefinition (champs, animations propres, variantes, phases, items(), render(), fileBase()).
                 shared/ = rendus communs portés de Motion Studio v2 (intro, chapitre, synthé, typographie).
                 registry.ts liste les modèles (l'ordre = l'ordre sur l'accueil).
+  auth/         Accès réservé : connexion Google et liste d'adresses (Firebase, chargé à la demande).
   brand/        Kit de marque (lit presets/brand.json et presets/presets.json, valide tout).
   project/      Le format d'une création (Project), sa validation (parseProject) et son rendu (renderProject).
   export/       Export : choix du format selon le logiciel (targets), noms de fichiers, rendu image par image,
@@ -60,13 +61,14 @@ Sens des dépendances (à respecter) : `engine` ← `templates` ← `project` �
 3. Tailles en **pixels de référence × `rc.scale`** (référence = image dont le petit côté fait 1080 px, comme
    Motion Studio). Jamais de px bruts : c'est ce qui rend les 4 formats (16:9, 9:16, 1:1, 4:5) automatiques.
    Les ombres canvas (`shadowBlur`, `shadowOffset*`) ignorent les transformations : les multiplier par `rc.scale`.
-4. Les zones masquées par Instagram / TikTok (`VERTICAL_UNSAFE`) sont affichées dans l'aperçu ; le placement
+4. Les zones masquées par Instagram / TikTok (`VERTICAL_UNSAFE`) s'affichent dans l'aperçu à la demande ; le placement
    des modèles suit la DA de référence (ne pas le déplacer sans accord).
 5. Toute donnée venant de l'extérieur (fichier importé, localStorage, JSON de `presets/`) passe par une fonction
    `parse…` qui valide et répare. Une vieille sauvegarde ne doit jamais faire planter l'appli.
 6. Petits fichiers, une responsabilité par fichier. Pas de fichier « fourre-tout ».
 7. Pas de nouvelle dépendance sans raison claire (la noter dans `docs/DECISIONS.md`).
 8. Pas de requête réseau vers un service tiers à l'exécution : polices et ffmpeg sont servis par le site.
+   Seule exception : Firebase, pour l'accès réservé (`src/auth/`, voir `docs/ACCES_RESERVE.md`).
 
 ## Ajouter un modèle
 

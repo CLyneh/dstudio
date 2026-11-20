@@ -32,12 +32,18 @@ Fond **noir** ou **vert** → le fichier est un MP4 classique (pas de transparen
 
 - **Vérifier la lisibilité** : dans l'aperçu, clique « Ma vidéo » ou glisse directement une capture
   ou ta vidéo sur l'aperçu. Elle s'affiche derrière (elle n'est pas exportée).
-- **Formats verticaux (9:16)** : les zones sûres s'activent toutes seules. Les zones rouges sont cachées
-  par l'interface Instagram / TikTok.
+- **Formats verticaux (9:16)** : textes et cartes s'agrandissent tout seuls pour un écran de téléphone. Le
+  bouton « Zones sûres » montre en pointillé ce que cache l'interface Instagram / TikTok.
 - **Plusieurs synthés d'un coup** : modèle « Synthés en lot », une personne par ligne au format
   `Nom | Fonction`. Tu peux coller deux colonnes depuis Excel ou Google Sheets.
 - **Carte à jouer** : choisis un des 4 modèles prêts à l'emploi (défi, rôle secret, carte action, vrai ou faux)
-  puis adapte le texte. Avec un logo placé « Dans la carte », il s'affiche dans le cadre d'illustration.
+  puis adapte le texte. Décoche « Ajouter une question » pour une carte avec le titre seul. La finition
+  « Couleur unie » remplit la carte avec la couleur d'accent du kit. Dans Style, « Dos de la carte » choisit
+  la face cachée : losanges, couleur unie avec ton logo (ajoute-le dans Kit de marque) ou minimaliste.
+  À l'étape Animation, choisis l'« Animation de début » (dos puis retournement, tirage de paquet, éventail…)
+  et l'« Animation de fin » (zoom & intertitre, fondu, retour face cachée, envol, aspiration). Avec
+  « Zoom & intertitre », « Animation du texte » choisit comment le texte arrive (fondu, machine à écrire…). Avec un logo placé « Dans la carte »,
+  il s'affiche au-dessus du titre.
 - **Série de chapitres** : une ligne par chapitre (`Surtitre | Titre | Sous-titre`). À l'export, choisis un fichier par
   chapitre ou un seul fichier enchaîné.
 - **Préréglages d'équipe** : sur l'accueil, choisis un préréglage (ex. « Reels · dynamique ») avant de

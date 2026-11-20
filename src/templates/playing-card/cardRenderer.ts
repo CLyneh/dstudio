@@ -5,13 +5,51 @@ import { drawLogo, isWatermark } from '@/engine/logo';
 import { clamp } from '@/engine/math';
 import type { ItemContent, RenderContext } from '@/engine/types';
 import type { Choice } from '../types';
+import { CHAPTER_ANIMATIONS, drawChapterTitle } from '../shared/chapterRenderer';
 import { cased, interFont, onAccent, titleFont } from '../shared/typography';
 
+/** Entrance of the card ("Animation de début"). */
 export const CARD_ANIMATIONS: Choice[] = [
+  {
+    id: 'back-reveal',
+    label: 'Dos puis retournement',
+    description: 'Le dos au centre, puis la carte se retourne',
+  },
   { id: 'card-flip-3d', label: 'Retournement 3D', description: 'Dos géométrique → face + reflet' },
   { id: 'deal-slide', label: 'Tirage de paquet', description: 'Glisse depuis la pioche + rebond' },
   { id: 'fan-snap', label: 'Distribution éventail', description: 'Paquet en éventail & claquement' },
   { id: 'holo-float', label: 'Lévitation & holo', description: 'Inclinaison 3D & balayage brillant' },
+];
+
+/** Ending of the card ("Animation de fin"). */
+export const CARD_OUTROS: Choice[] = [
+  {
+    id: 'zoom-intertitle',
+    label: 'Zoom & intertitre',
+    description: 'La carte zoome et laisse le texte au centre',
+  },
+  { id: 'fade-down', label: 'Fondu', description: "Elle descend et s'efface (sortie d'origine)" },
+  { id: 'flip-away', label: 'Retour face cachée', description: "Elle se retourne sur le dos et s'éloigne" },
+  { id: 'throw', label: 'Envol', description: "Elle s'envole hors de l'écran en tournant" },
+  { id: 'shrink', label: 'Aspiration', description: 'Elle tourbillonne et rétrécit jusqu’à disparaître' },
+];
+
+/** Text entrance of "Zoom & intertitre": two own styles + the chapter animations of Motion Studio v2. */
+export const CARD_TEXT_ANIMATIONS: Choice[] = [
+  { id: 'slide-mask', label: 'Slide & masque', description: 'Révélation nette + trait de couleur' },
+  { id: 'fade', label: 'Fondu', description: 'Le texte apparaît en douceur' },
+  { id: 'typewriter', label: 'Machine à écrire', description: 'Lettre par lettre avec un curseur' },
+  ...CHAPTER_ANIMATIONS.filter((a) => a.id !== 'slide-mask'),
+];
+
+export const CARD_BACKS: Choice[] = [
+  { id: 'geometric', label: 'Losanges', description: 'Motif géométrique façon jeu de cartes' },
+  {
+    id: 'solid-logo',
+    label: 'Couleur unie + logo',
+    description: "Couleur d'accent et logo du kit au centre",
+  },
+  { id: 'minimal', label: 'Minimaliste', description: 'Fond uni et un simple trait de couleur' },
 ];
 
 export const CARD_VARIANTS: Choice[] = [
@@ -19,6 +57,7 @@ export const CARD_VARIANTS: Choice[] = [
   { id: 'ivoire-boardgame', label: 'Ivoire jeu de société', description: 'Papier épais crème & encre' },
   { id: 'neon-arcade', label: 'Néon arcade', description: 'Halo lumineux & grille cyber' },
   { id: 'minimal-bmc', label: 'Minimaliste blanc', description: 'Façon Blanc Manger Coco' },
+  { id: 'solid-color', label: 'Couleur unie', description: "Carte pleine à la couleur d'accent" },
 ];
 
 interface Palette {
@@ -31,12 +70,34 @@ interface Palette {
   titleColor: string;
   bodyColor: string;
   footerColor: string;
-  artBoxBg: string;
   backPrimary: string;
   backSecondary: string;
+  /** Separator, corner diamonds and footer rule. */
+  ornament: string;
 }
 
 function cardPalette(theme: string, accent: string, textColor: string): Palette {
+  return { ornament: accent, ...basePalette(theme, accent, textColor) };
+}
+
+function basePalette(theme: string, accent: string, textColor: string): Omit<Palette, 'ornament'> | Palette {
+  if (theme === 'solid-color') {
+    const ink = onAccent(accent);
+    return {
+      bgTop: accent,
+      bgBottom: accent,
+      outerBorder: accent,
+      innerBorder: hexToRgba(ink, 0.35),
+      badgeBg: ink,
+      badgeText: accent,
+      titleColor: ink,
+      bodyColor: ink,
+      footerColor: hexToRgba(ink, 0.8),
+      backPrimary: '#0F121C',
+      backSecondary: '#181C2B',
+      ornament: ink,
+    };
+  }
   if (theme === 'ivoire-boardgame') {
     return {
       bgTop: '#FAF7F0',
@@ -48,7 +109,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: '#09090B',
       bodyColor: '#3F3F46',
       footerColor: '#71717A',
-      artBoxBg: 'rgba(24, 24, 27, 0.05)',
       backPrimary: '#18181B',
       backSecondary: '#27272A',
     };
@@ -64,7 +124,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: textColor,
       bodyColor: '#E2E8F0',
       footerColor: '#38BDF8',
-      artBoxBg: 'rgba(56, 189, 248, 0.08)',
       backPrimary: '#0B0F1E',
       backSecondary: '#1E1B4B',
     };
@@ -80,7 +139,6 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
       titleColor: '#09090B',
       bodyColor: '#18181B',
       footerColor: '#52525B',
-      artBoxBg: 'rgba(9, 9, 11, 0.04)',
       backPrimary: '#09090B',
       backSecondary: '#18181B',
     };
@@ -95,17 +153,16 @@ function cardPalette(theme: string, accent: string, textColor: string): Palette 
     titleColor: textColor,
     bodyColor: '#CBD5E1',
     footerColor: '#94A3B8',
-    artBoxBg: 'rgba(255, 255, 255, 0.03)',
     backPrimary: '#0F121C',
     backSecondary: '#181C2B',
   };
 }
 
-/** Centered paragraph, up to `maxLines` lines. */
-function wrapCentered(
+/** Horizontally centered paragraph whose first line is at `firstY`, up to `maxLines` lines. */
+function wrapBelow(
   rc: RenderContext,
   text: string,
-  centerY: number,
+  firstY: number,
   maxWidth: number,
   lineHeight: number,
   maxLines: number,
@@ -124,14 +181,15 @@ function wrapCentered(
     }
   }
   if (current && lines.length < maxLines) lines.push(current);
-  const first = centerY - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, i) => ctx.fillText(line, 0, first + i * lineHeight));
+  lines.forEach((line, i) => ctx.fillText(line, 0, firstY + i * lineHeight));
 }
 
 /** Card coordinates are in "card pixels" (a 510×720 card), scaled by the caller. */
-function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palette) {
+function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palette, back: string) {
   const { ctx } = rc;
   const accent = rc.style.accent;
+  if (back === 'solid-logo') return paintSolidLogoBack(rc, w, h, r);
+  if (back === 'minimal') return paintMinimalBack(rc, w, h, r, p);
   const grad = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
   grad.addColorStop(0, p.backSecondary);
   grad.addColorStop(1, p.backPrimary);
@@ -183,6 +241,31 @@ function paintBack(rc: RenderContext, w: number, h: number, r: number, p: Palett
   ctx.restore();
 }
 
+/** Plain accent color with the brand logo in the middle (nothing else when the kit has no logo). */
+function paintSolidLogoBack(rc: RenderContext, w: number, h: number, r: number) {
+  const { ctx } = rc;
+  roundRect(ctx, -w / 2, -h / 2, w, h, r);
+  ctx.fillStyle = rc.style.accent;
+  ctx.fill();
+  const logo = rc.logo.image;
+  if (!logo) return;
+  const ratio = Math.min((w * 0.56) / logo.width, (h * 0.3) / logo.height);
+  const dW = logo.width * ratio;
+  const dH = logo.height * ratio;
+  ctx.drawImage(logo, -dW / 2, -dH / 2, dW, dH);
+}
+
+/** Same flat color as the front, one short accent stroke: nothing that says "playing card". */
+function paintMinimalBack(rc: RenderContext, w: number, h: number, r: number, p: Palette) {
+  const { ctx } = rc;
+  roundRect(ctx, -w / 2, -h / 2, w, h, r);
+  ctx.fillStyle = p.bgTop;
+  ctx.fill();
+  ctx.fillStyle = p.ornament;
+  roundRect(ctx, -36, -2.5, 72, 5, 2.5);
+  ctx.fill();
+}
+
 function paintFront(
   rc: RenderContext,
   item: ItemContent,
@@ -191,9 +274,10 @@ function paintFront(
   r: number,
   p: Palette,
   sheen: number,
+  textAlpha = 1,
 ) {
   const { ctx, style } = rc;
-  const accent = style.accent;
+  const accent = p.ornament;
   const k = style.textScale;
   const badge = cased(rc, item.badge);
   const num = cased(rc, item.number);
@@ -282,73 +366,53 @@ function paintFront(
     ctx.restore();
   }
 
-  // Illustration box: the brand logo when placed "above text", otherwise a small emblem.
-  const logo = rc.logo.image;
-  const hasImage = !!logo && rc.style.logo.show && rc.style.logo.placement === 'above-text';
-  const artW = w - 84;
-  const artH = Math.round(h * (hasImage ? 0.27 : 0.14));
-  const artY = -h / 2 + 106;
-  roundRect(ctx, -artW / 2, artY, artW, artH, 16);
-  ctx.fillStyle = p.artBoxBg;
-  ctx.fill();
-  ctx.strokeStyle = hexToRgba(accent, 0.25);
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  if (hasImage && logo) {
-    const size = Math.min(1.2, rc.style.logo.size);
-    const ratio = Math.min(((artW - 28) * size) / logo.width, ((artH - 22) * size) / logo.height);
-    const dW = logo.width * ratio;
-    const dH = logo.height * ratio;
+  if (textAlpha > 0) {
     ctx.save();
-    ctx.globalAlpha *= rc.style.logo.opacity;
-    ctx.drawImage(logo, -dW / 2, artY + (artH - dH) / 2, dW, dH);
-    ctx.restore();
-  } else {
-    const ey = artY + artH / 2;
-    ctx.save();
-    ctx.strokeStyle = hexToRgba(accent, 0.45);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-90, ey);
-    ctx.lineTo(-28, ey);
-    ctx.moveTo(28, ey);
-    ctx.lineTo(90, ey);
-    ctx.stroke();
-    ctx.translate(0, ey);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = accent;
-    ctx.fillRect(-10, -10, 20, 20);
-    ctx.restore();
-  }
+    ctx.globalAlpha *= textAlpha;
+    // Title sits at the vertical center of the card; the brand logo (when placed "above text") goes above it.
+    let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
+    ctx.font = titleFont(rc, 900, titleSize);
+    const measured = ctx.measureText(title).width;
+    if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
+    const titleY = body ? -44 : -20;
 
-  const contentTop = artY + artH + 26;
-  const contentBottom = h / 2 - 74;
-  const mid = (contentTop + contentBottom) / 2;
-  let titleSize = Math.round(46 * k * (style.fontId === 'bebas-neue' ? 1.18 : 1));
-  ctx.font = titleFont(rc, 900, titleSize);
-  const measured = ctx.measureText(title).width;
-  if (measured > w - 76 && measured > 0) titleSize = Math.floor(titleSize * ((w - 76) / measured));
-  const titleY = body ? mid - 52 : mid;
-  ctx.save();
-  ctx.font = titleFont(rc, 900, titleSize);
-  ctx.fillStyle = p.titleColor;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(title, 0, titleY);
-  const sepY = titleY + titleSize * 0.68;
-  ctx.fillStyle = accent;
-  roundRect(ctx, -36, sepY, 72, 5, 2.5);
-  ctx.fill();
-  ctx.restore();
+    const logo = rc.logo.image;
+    if (logo && rc.style.logo.show && rc.style.logo.placement === 'above-text') {
+      const zoneTop = topBarY + 46;
+      const zoneBottom = titleY - titleSize * 0.6 - 30;
+      const zoneH = zoneBottom - zoneTop;
+      const size = Math.min(1.2, rc.style.logo.size);
+      const ratio = Math.min(((w - 140) * size) / logo.width, (zoneH * 0.8 * size) / logo.height);
+      const dW = logo.width * ratio;
+      const dH = logo.height * ratio;
+      ctx.save();
+      ctx.globalAlpha *= rc.style.logo.opacity;
+      ctx.drawImage(logo, -dW / 2, zoneTop + (zoneH - dH) / 2, dW, dH);
+      ctx.restore();
+    }
 
-  if (body) {
-    const bodySize = Math.round(23 * Math.min(1.2, k));
     ctx.save();
-    ctx.font = interFont(500, bodySize);
-    ctx.fillStyle = p.bodyColor;
+    ctx.font = titleFont(rc, 900, titleSize);
+    ctx.fillStyle = p.titleColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    wrapCentered(rc, body, sepY + 58, w - 84, bodySize * 1.38, 4);
+    ctx.fillText(title, 0, titleY);
+    const sepY = titleY + titleSize * 0.68;
+    ctx.fillStyle = accent;
+    roundRect(ctx, -36, sepY, 72, 5, 2.5);
+    ctx.fill();
+    ctx.restore();
+
+    if (body) {
+      const bodySize = Math.round(23 * Math.min(1.2, k));
+      ctx.save();
+      ctx.font = interFont(500, bodySize);
+      ctx.fillStyle = p.bodyColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      wrapBelow(rc, body, sepY + 48, w - 84, bodySize * 1.38, 4);
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -414,24 +478,43 @@ export function cardPhases(duration: number) {
 }
 
 /** A playing card that appears with one of 4 "3D" moves. */
-export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
+interface CardGeometry {
+  w: number;
+  h: number;
+  r: number;
+  p: Palette;
+  back: string;
+}
+
+/** Shared timing scale: animations are designed for a 5.5 s card and shortened on shorter ones. */
+function timeScale(duration: number): number {
+  return Math.min(1, duration / 5.5);
+}
+
+/** Timings of "Zoom & intertitre" (seconds). */
+function zoomTimings(duration: number) {
+  const k = timeScale(duration);
+  return { zoomStart: 2.0 * k, zoomEnd: 2.7 * k, textFade: 0.25 * k, text: 2.5 * k };
+}
+
+/**
+ * Draws the card as its entrance animation leaves it at time t. `exitRaw` (0→1) is the built-in
+ * "Fondu" ending of Motion Studio v2; other endings pass 0 and move the whole drawing themselves.
+ */
+function drawEntrance(
+  rc: RenderContext,
+  item: ItemContent,
+  g: CardGeometry,
+  exitRaw: number,
+  textAlpha: number,
+) {
   const { ctx, width: W, height: H, time: t, duration, scale: S, portrait, style } = rc;
+  const { w, h, r, p, back } = g;
   const cx = W / 2;
   const cy = H / 2;
-  const enterRaw = clamp(t / Math.min(0.95, duration * 0.28));
-  const exitLength = Math.min(0.6, duration * 0.2);
-  const exitRaw = t > duration - exitLength ? clamp((t - (duration - exitLength)) / exitLength) : 0;
-  const easeIn = easeOutExpo(enterRaw);
+  const easeIn = easeOutExpo(clamp(t / Math.min(0.95, duration * 0.28)));
   const easeOut = easeInCubic(exitRaw);
   const exitAlpha = 1 - easeOut;
-
-  if (isWatermark(rc)) drawLogo(rc);
-  if (exitAlpha <= 0.001) return;
-
-  const w = portrait ? 540 : 510;
-  const h = portrait ? 760 : 720;
-  const r = 34;
-  const p = cardPalette(style.variant, style.accent, style.textColor);
   const anim = rc.animation.style;
   const sheenAt = (start: number, length: number) => {
     const s = clamp((t - start) / length);
@@ -439,8 +522,7 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
   };
 
   ctx.save();
-  ctx.globalAlpha = exitAlpha;
-
+  ctx.globalAlpha *= exitAlpha;
   if (anim === 'deal-slide') {
     const dealT = easeOutBack(clamp(t / Math.min(0.78, duration * 0.25)));
     const slideX = ((1 - dealT) * (portrait ? 480 : 720) - easeOut * 650) * S;
@@ -451,26 +533,27 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(rot);
     ctx.scale(zoom * S, zoom * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
-    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.8));
+    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.8), textAlpha);
   } else if (anim === 'fan-snap') {
     const fanT = easeOutBack(clamp(t / Math.min(0.85, duration * 0.26)));
     const snapT = easeOutExpo(clamp((t - 0.12) / 0.65));
     const open = fanT * (1 - easeOut);
+    const base = ctx.globalAlpha;
     [-1, 1].forEach((side) => {
       ctx.save();
-      ctx.globalAlpha = exitAlpha * 0.88 * easeIn;
+      ctx.globalAlpha = base * 0.88 * easeIn;
       ctx.translate(cx + side * 95 * open * S, cy + (18 + (1 - easeIn) * 80) * S);
       ctx.rotate(side * 0.22 * open);
       ctx.scale(0.92 * S, 0.92 * S);
       cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.45)', 24, 0, 12);
-      paintBack(rc, w, h, r, p);
+      paintBack(rc, w, h, r, p, back);
       ctx.restore();
     });
     const zoom = (0.76 + 0.24 * snapT) * (1 - easeOut * 0.1);
     ctx.translate(cx, cy + ((1 - snapT) * 70 + easeOut * 90) * S);
     ctx.scale(zoom * S, zoom * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.62)', 48, 0, 26);
-    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.85));
+    paintFront(rc, item, w, h, r, p, sheenAt(0.55, 0.85), textAlpha);
   } else if (anim === 'holo-float') {
     const floatY = Math.sin(t * 2.8) * 14;
     const tilt = Math.sin(t * 2.1) * 0.035;
@@ -481,9 +564,8 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(tilt);
     ctx.scale(zoom * skew * S, zoom * S);
     cardShadow(rc, w, h, r, hexToRgba(style.accent, 0.45), 55, 0, 0);
-    paintFront(rc, item, w, h, r, p, loopSheen <= 1 ? loopSheen : -1);
-  } else {
-    // card-flip-3d (default)
+    paintFront(rc, item, w, h, r, p, loopSheen <= 1 ? loopSheen : -1, textAlpha);
+  } else if (anim === 'card-flip-3d') {
     const flipT = easeInOutCubic(clamp(t / Math.min(1.05, duration * 0.32)));
     const angle = Math.PI * (1 - flipT);
     const cos = Math.cos(angle);
@@ -493,12 +575,136 @@ export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
     ctx.rotate(tilt);
     ctx.scale(Math.max(0.02, Math.abs(cos)) * lift * S, lift * S);
     cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.58)', 45, Math.sin(angle) * 28, 24);
-    if (cos >= 0) paintFront(rc, item, w, h, r, p, sheenAt(0.65, 0.85));
-    else paintBack(rc, w, h, r, p);
+    if (cos >= 0) paintFront(rc, item, w, h, r, p, sheenAt(0.65, 0.85), textAlpha);
+    else paintBack(rc, w, h, r, p, back);
+  } else {
+    // back-reveal (default): face down in the middle, a pause, then the flip.
+    const k = timeScale(duration);
+    const appear = 0.45 * k;
+    const appearT = easeOutBack(clamp(t / appear));
+    const flipT = easeInOutCubic(clamp((t - 0.9 * k) / (0.6 * k)));
+    const cos = Math.cos(Math.PI * (1 - flipT));
+    const zoom = (0.7 + 0.3 * appearT) * (1 - easeOut * 0.1);
+    ctx.globalAlpha *= clamp(t / (appear * 0.5));
+    ctx.translate(cx, cy + easeOut * 90 * S);
+    ctx.scale(Math.max(0.02, Math.abs(cos)) * zoom * S, zoom * S);
+    cardShadow(rc, w, h, r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
+    if (cos >= 0) paintFront(rc, item, w, h, r, p, -1, textAlpha);
+    else paintBack(rc, w, h, r, p, back);
   }
   ctx.restore();
+}
 
-  if (!isWatermark(rc) && style.logo.placement !== 'above-text') {
+/** Scales / rotates everything drawn by `draw` around the middle of the frame. */
+function aroundCenter(rc: RenderContext, scaleX: number, scaleY: number, rotation: number, draw: () => void) {
+  const { ctx, width: W, height: H } = rc;
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(rotation);
+  ctx.scale(scaleX, scaleY);
+  ctx.translate(-W / 2, -H / 2);
+  draw();
+  ctx.restore();
+}
+
+/** A playing card: an entrance ("Animation de début") then an ending ("Animation de fin"). */
+export function drawPlayingCard(rc: RenderContext, item: ItemContent): void {
+  const { ctx, width: W, height: H, time: t, duration, scale: S, portrait, style } = rc;
+  const cx = W / 2;
+  const cy = H / 2;
+  const w = portrait ? 540 : 510;
+  const h = portrait ? 760 : 720;
+  const g: CardGeometry = {
+    w,
+    h,
+    r: 34,
+    p: cardPalette(style.variant, style.accent, style.textColor),
+    back: CARD_BACKS.some((b) => b.id === item.back) ? item.back! : CARD_BACKS[0]!.id,
+  };
+  const outro = CARD_OUTROS.some((o) => o.id === item.outro) ? item.outro! : CARD_OUTROS[0]!.id;
+
+  if (isWatermark(rc)) drawLogo(rc);
+
+  if (outro === 'zoom-intertitle') {
+    drawZoomOutro(rc, item, g);
+  } else if (outro === 'fade-down') {
+    const exitLength = Math.min(0.6, duration * 0.2);
+    const exitRaw = t > duration - exitLength ? clamp((t - (duration - exitLength)) / exitLength) : 0;
+    if (exitRaw < 0.999) drawEntrance(rc, item, g, exitRaw, 1);
+  } else {
+    const outLen = Math.min(0.8, duration * 0.22);
+    const u = clamp((t - (duration - outLen)) / outLen);
+    if (u <= 0) drawEntrance(rc, item, g, 0, 1);
+    else if (outro === 'throw') {
+      const e = easeInCubic(u);
+      ctx.save();
+      ctx.globalAlpha *= 1 - clamp((u - 0.6) / 0.4);
+      ctx.translate(e * W * 0.75, -e * H * 0.9);
+      aroundCenter(rc, 1 - e * 0.2, 1 - e * 0.2, e * 1.1, () => drawEntrance(rc, item, g, 0, 1));
+      ctx.restore();
+    } else if (outro === 'shrink') {
+      const e = easeInCubic(u);
+      ctx.save();
+      ctx.globalAlpha *= 1 - clamp((u - 0.7) / 0.3);
+      aroundCenter(rc, 1 - e, 1 - e, e * Math.PI * 1.5, () => drawEntrance(rc, item, g, 0, 1));
+      ctx.restore();
+    } else {
+      // flip-away: turns face down, then shrinks back into the distance.
+      const a = easeInOutCubic(clamp(u / 0.55));
+      const cos = Math.cos(Math.PI * a);
+      const away = easeInCubic(clamp((u - 0.55) / 0.45));
+      if (cos >= 0) aroundCenter(rc, Math.max(0.02, cos), 1, 0, () => drawEntrance(rc, item, g, 0, 1));
+      else {
+        const zoom = 1 - away * 0.55;
+        ctx.save();
+        ctx.globalAlpha *= 1 - away;
+        ctx.translate(cx, cy - away * 120 * S);
+        ctx.scale(Math.max(0.02, -cos) * zoom * S, zoom * S);
+        cardShadow(rc, w, h, g.r, 'rgba(0, 0, 0, 0.55)', 42, 0, 22);
+        paintBack(rc, w, h, g.r, g.p, g.back);
+        ctx.restore();
+      }
+    }
+  }
+
+  if (!isWatermark(rc) && style.logo.placement !== 'above-text' && outro !== 'zoom-intertitle') {
     drawLogo(rc, { topY: cy - (h / 2) * S, badgeLeftX: cx - (w / 2) * S, badgeY: cy - (h / 2 - 50) * S });
   }
+}
+
+/**
+ * "Zoom & intertitre": after its entrance, the card zooms until it fills the frame and dissolves,
+ * then the title and question come in the middle like a chapter intertitle.
+ */
+function drawZoomOutro(rc: RenderContext, item: ItemContent, g: CardGeometry) {
+  const { ctx, width: W, height: H, time: t, duration, scale: S } = rc;
+  const tm = zoomTimings(duration);
+  const zoomT = easeInOutCubic(clamp((t - tm.zoomStart) / (tm.zoomEnd - tm.zoomStart)));
+  const cardText = 1 - clamp((t - tm.zoomStart) / tm.textFade);
+  // Big enough for the badge, medallion, footer and inner frame to leave the picture on every format.
+  const fill = Math.max(W / ((g.w - 120) * S), H / ((g.h - 200) * S)) * 1.08;
+  const zoom = 1 + (fill - 1) * zoomT;
+  // The card dissolves at the end of the zoom: only the text stays, over the video.
+  const dissolve = 1 - clamp((t - (tm.zoomStart + tm.zoomEnd) / 2) / (tm.zoomEnd - tm.zoomStart));
+  if (dissolve > 0) {
+    ctx.save();
+    ctx.globalAlpha *= dissolve;
+    aroundCenter(rc, zoom, zoom, 0, () => drawEntrance(rc, item, g, 0, cardText));
+    ctx.restore();
+  }
+
+  if (t < tm.text) return;
+  drawChapterTitle(
+    {
+      ...rc,
+      time: t - tm.text,
+      duration: duration - tm.text,
+      style: { ...rc.style, logo: { ...rc.style.logo, show: false } },
+      animation: {
+        ...rc.animation,
+        style: CARD_TEXT_ANIMATIONS.some((a) => a.id === item.textAnim) ? item.textAnim! : 'slide-mask',
+      },
+    },
+    { kicker: item.badge ?? '', title: item.title ?? '', subtitle: item.body ?? '' },
+  );
 }

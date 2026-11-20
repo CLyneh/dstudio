@@ -143,7 +143,10 @@
     }
     for (const f of t.fields) {
       const v = esc(p.content[f.key]);
-      h += `<div class="field"><label for="f_${f.key}">${esc(f.label)}</label>${
+      const off = f.optional && p.content[f.key + 'Off'] === '1';
+      if (f.optional)
+        h += `<label class="check"><input type="checkbox" id="t_${f.key}" data-off="${f.key}" ${off ? '' : 'checked'}><span>${esc(f.optional)}</span></label>`;
+      h += `<div class="field" id="w_${f.key}" ${off ? 'hidden' : ''}><label for="f_${f.key}">${esc(f.label)}</label>${
         f.multiline
           ? `<textarea id="f_${f.key}" data-key="${f.key}" style="font-family:var(--f-ui);font-size:14px;min-height:80px">${v}</textarea>`
           : `<input type="text" id="f_${f.key}" data-key="${f.key}" value="${v}" placeholder="${esc(f.placeholder)}">`
@@ -167,6 +170,15 @@
     let st = '';
     if (t.variants)
       st += `<div class="field"><span class="lbl">${esc(t.variants.label)}</span><div class="choices">${choiceButtons(t.variants.options, p.style.variant, 'data-variant')}</div></div>`;
+    for (const o of (t.options ?? []).filter((x) => (x.step ?? 'style') === 'style')) {
+      const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
+      st += `<div class="field"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
+        .map(
+          (c) =>
+            `<button type="button" class="choice" data-opt="${o.key}" data-optval="${c.id}" aria-pressed="${c.id === cur}">${esc(c.label)}<small>${esc(c.description)}</small></button>`,
+        )
+        .join('')}</div></div>`;
+    }
     const accents = D.brandPalette(brand);
     st += `<div class="field"><span class="lbl">Couleur d'accent <a class="link-btn" href="#marque" style="font-size:12px">Gérer le kit →</a></span><div class="swatches">${accents
       .map(
@@ -214,7 +226,20 @@
 
     // Animation
     $('#animPanel').innerHTML =
-      `<div class="field"><span class="lbl">Animation <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>
+      `<div class="field"><span class="lbl">${esc(t.animationLabel ?? 'Animation')} <span class="mono">${t.animations.length} styles</span></span><div class="choices" id="animChoices">${choiceButtons(t.animations, p.animation.style, 'data-anim')}</div><span class="hint">Survole une animation pour la voir sur l'aperçu.</span></div>${(
+        t.options ?? []
+      )
+        .filter((o) => o.step === 'animation')
+        .map((o) => {
+          const cur = o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o.options[0].id;
+          return `<div class="field" data-opt-field="${o.key}"><span class="lbl">${esc(o.label)}</span><div class="choices">${o.options
+            .map(
+              (c) =>
+                `<button type="button" class="choice" data-opt="${o.key}" data-optval="${c.id}" aria-pressed="${c.id === cur}">${esc(c.label)}<small>${esc(c.description)}</small></button>`,
+            )
+            .join('')}</div></div>`;
+        })
+        .join('')}
       <div class="field"><label for="durRange">Temps à l'écran <span class="mono" id="durVal"></span></label><input class="range" type="range" id="durRange" min="15" max="100" step="5" value="${p.duration * 10}"></div>`;
   }
 
@@ -229,6 +254,11 @@
     });
     panel.addEventListener('change', (e) => {
       const el = e.target;
+      if (el.dataset.off) {
+        update({ content: { [el.dataset.off + 'Off']: el.checked ? '' : '1' } });
+        const w = document.getElementById('w_' + el.dataset.off);
+        if (w) w.hidden = !el.checked;
+      }
       if (el.id === 'fontSel') update({ style: { fontId: el.value } });
       if (el.id === 'logoPlace') update({ style: { logo: { placement: el.value } } });
       if (el.id === 'logoMotion') update({ style: { logo: { motion: el.value } } });
@@ -240,6 +270,7 @@
         update({ content: T().quickFills[+b.dataset.quick].content });
         buildPanels();
       } else if (b.dataset.variant) update({ style: { variant: b.dataset.variant } });
+      else if (b.dataset.opt) update({ content: { [b.dataset.opt]: b.dataset.optval } });
       else if (b.dataset.accent) update({ style: { accent: b.dataset.accent } });
       else if (b.dataset.textcolor) update({ style: { textColor: b.dataset.textcolor } });
       else if (b.dataset.anim) {
@@ -290,11 +321,20 @@
     $$('[data-variant]').forEach((b) =>
       b.setAttribute('aria-pressed', b.dataset.variant === p.style.variant),
     );
+    $$('[data-opt]').forEach((b) => {
+      const o = (t.options ?? []).find((x) => x.key === b.dataset.opt);
+      const cur = o && o.options.some((x) => x.id === p.content[o.key]) ? p.content[o.key] : o?.options[0].id;
+      b.setAttribute('aria-pressed', b.dataset.optval === cur);
+    });
     $$('[data-accent]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.accent === p.style.accent));
     $$('[data-textcolor]').forEach((b) =>
       b.setAttribute('aria-pressed', b.dataset.textcolor === p.style.textColor),
     );
     $$('[data-anim]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.anim === p.animation.style));
+    $$('[data-opt-field]').forEach((el) => {
+      const o = (t.options ?? []).find((x) => x.key === el.dataset.optField);
+      el.hidden = !!o?.showIf && !o.showIf(p.content);
+    });
     $$('[data-app]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.app === S.app));
     $$('#ratioSeg button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === p.format));
     const sv = $('#sizeVal');
@@ -522,7 +562,7 @@
         [
           'v1',
           'Carte à jouer · 4 finitions, 4 animations 3D',
-          'Noir collector, Ivoire, Néon arcade, Minimaliste ; Retournement, Tirage, Éventail, Lévitation holo. 4 cartes prêtes à l’emploi.',
+          'Noir collector, Ivoire, Néon arcade, Minimaliste ; Zoom & intertitre, Retournement, Tirage, Éventail, Lévitation holo. 4 cartes prêtes à l’emploi.',
           false,
         ],
         [
@@ -642,9 +682,7 @@
     segBind($('#ratioSeg'), (v) => {
       update({ format: v });
       if (v === '9:16' && !S.safe) {
-        S.safe = true;
-        $('#safeBtn').setAttribute('aria-pressed', 'true');
-        toast('Zones sûres activées : évite d’y placer du texte');
+        toast('Astuce : « Zones sûres » montre ce que cache l’interface Instagram / TikTok');
       }
     });
     segBind($('#bgSeg'), (v) => (S.bg = v));

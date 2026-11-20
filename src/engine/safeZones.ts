@@ -11,13 +11,15 @@ export const VERTICAL_UNSAFE = {
 export function drawSafeZones(ctx: Ctx2D, width: number, height: number): void {
   ctx.save();
   if (height > width) {
+    // Light dashed outline of the visible area: the picture behind stays readable.
     const { top, bottom, right } = VERTICAL_UNSAFE;
-    ctx.fillStyle = 'rgba(255, 93, 98, 0.22)';
-    ctx.fillRect(0, 0, width, height * top);
-    ctx.fillRect(0, height * (1 - bottom), width, height * bottom);
-    ctx.fillRect(width * (1 - right), height * top, width * right, height * (1 - top - bottom));
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `700 ${Math.round(width / 34)}px Manrope, sans-serif`;
+    ctx.setLineDash([10, 7]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 93, 98, 0.9)';
+    ctx.strokeRect(1, height * top, width * (1 - right), height * (1 - top - bottom));
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = `700 ${Math.round(width / 38)}px Manrope, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText("Caché par l'interface Instagram / TikTok", width / 2, height * 0.07);
     ctx.fillText('Légende, boutons, nom du compte', width / 2, height * 0.9);

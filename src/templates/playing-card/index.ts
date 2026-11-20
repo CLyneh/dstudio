@@ -1,6 +1,15 @@
 import { slugify } from '@/engine/text';
 import type { TemplateDefinition } from '../types';
-import { CARD_ANIMATIONS, CARD_VARIANTS, cardPhases, drawPlayingCard } from './cardRenderer';
+import { withoutHiddenFields } from '../shared/optionalFields';
+import {
+  CARD_ANIMATIONS,
+  CARD_BACKS,
+  CARD_OUTROS,
+  CARD_TEXT_ANIMATIONS,
+  CARD_VARIANTS,
+  cardPhases,
+  drawPlayingCard,
+} from './cardRenderer';
 
 export const playingCard: TemplateDefinition = {
   id: 'playing-card',
@@ -13,6 +22,7 @@ export const playingCard: TemplateDefinition = {
     {
       key: 'body',
       label: 'Question / règle',
+      optional: 'Ajouter une question',
       defaultValue: 'Quelle a été ta plus grande prise de risque cette année ?',
       multiline: true,
     },
@@ -64,12 +74,24 @@ export const playingCard: TemplateDefinition = {
       },
     },
   ],
-  defaultDuration: 4.5,
+  defaultDuration: 5.5,
   supportsPosition: false,
   animations: CARD_ANIMATIONS,
+  animationLabel: 'Animation de début',
   variants: { label: 'Finition de la carte', options: CARD_VARIANTS },
+  options: [
+    { key: 'back', label: 'Dos de la carte', options: CARD_BACKS },
+    { key: 'outro', label: 'Animation de fin', options: CARD_OUTROS, step: 'animation' },
+    {
+      key: 'textAnim',
+      label: 'Animation du texte',
+      options: CARD_TEXT_ANIMATIONS,
+      step: 'animation',
+      showIf: (content) => (content.outro ?? 'zoom-intertitle') === 'zoom-intertitle',
+    },
+  ],
   phases: cardPhases,
-  items: (content) => [content],
+  items: (content) => [withoutHiddenFields(playingCard.fields, content)],
   render: drawPlayingCard,
   fileBase: (item) => `carte_${slugify(item.title ?? '')}`,
 };

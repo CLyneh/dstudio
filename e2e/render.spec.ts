@@ -50,10 +50,20 @@ const VARIANTS: [string, string, number][] = [
   ['playing-card', 'ivoire-boardgame', 2.5],
   ['playing-card', 'neon-arcade', 2.5],
   ['playing-card', 'minimal-bmc', 2.5],
+  ['playing-card', 'solid-color', 2.5],
 ];
 for (const [templateId, variant, time] of VARIANTS) {
   test(`${templateId} — ${variant}`, async ({ page }) => {
     expect(await frame(page, { templateId, time, variant })).toMatchSnapshot(`${templateId}-${variant}.png`);
+  });
+}
+
+// Card backs, seen face down at the start of "Zoom & intertitre" (with a stand-in logo).
+for (const back of ['geometric', 'solid-logo', 'minimal']) {
+  test(`playing-card — back ${back}`, async ({ page }) => {
+    expect(
+      await frame(page, { templateId: 'playing-card', time: 0.3, content: { back }, withLogo: true }),
+    ).toMatchSnapshot(`playing-card-back-${back}.png`);
   });
 }
 
@@ -64,6 +74,8 @@ const ANIMATIONS: [string, string][] = [
   ['chapter', 'framed-box'],
   ['lower-third', 'elastic-pop'],
   ['playing-card', 'fan-snap'],
+  ['playing-card', 'card-flip-3d'],
+  ['playing-card', 'back-reveal'],
 ];
 for (const [templateId, animation] of ANIMATIONS) {
   test(`${templateId} — animation ${animation}`, async ({ page }) => {

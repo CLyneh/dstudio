@@ -1,6 +1,7 @@
 import { DURATION_RANGE, type Project } from '@/project/project';
 import { useStore } from '@/state/store';
 import { getTemplate } from '@/templates/registry';
+import { optionValue } from '@/templates/shared/templateOptions';
 
 export function StepAnimation({ project }: { project: Project }) {
   const update = useStore((s) => s.updateCurrent);
@@ -12,7 +13,8 @@ export function StepAnimation({ project }: { project: Project }) {
     <>
       <div className="field">
         <span className="label">
-          Animation <span className="mono">{template.animations.length} styles</span>
+          {template.animationLabel ?? 'Animation'}{' '}
+          <span className="mono">{template.animations.length} styles</span>
         </span>
         <div className="choices" onMouseLeave={() => setHover(null)}>
           {template.animations.map((a) => (
@@ -36,6 +38,34 @@ export function StepAnimation({ project }: { project: Project }) {
         </div>
         <span className="hint">Survole une animation pour la voir sur l'aperçu.</span>
       </div>
+
+      {template.options
+        ?.filter((o) => o.step === 'animation' && (!o.showIf || o.showIf(project.content)))
+        .map((option) => {
+          const current = optionValue(option, project.content);
+          return (
+            <div className="field" key={option.key}>
+              <span className="label">{option.label}</span>
+              <div className="choices">
+                {option.options.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    className="choice"
+                    aria-pressed={current === o.id}
+                    onClick={() => {
+                      update({ content: { [option.key]: o.id } });
+                      restart();
+                    }}
+                  >
+                    {o.label}
+                    <small>{o.description}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
       <label className="field">
         <span className="label">

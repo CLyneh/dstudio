@@ -5,6 +5,7 @@ import type { LogoMotion, LogoPlacement, TextCase } from '@/engine/types';
 import { TEXT_SCALE_RANGE, VEIL_MAX, type Project } from '@/project/project';
 import { useStore } from '@/state/store';
 import { getTemplate } from '@/templates/registry';
+import { optionValue } from '@/templates/shared/templateOptions';
 import { Segmented } from '@/ui/components/Segmented';
 
 const TEXT_COLORS = ['#ffffff', '#f8fafc', '#fde68a', '#09090b'];
@@ -39,6 +40,31 @@ export function StepStyle({ project }: { project: Project }) {
           </div>
         </div>
       )}
+
+      {template.options
+        ?.filter((option) => (option.step ?? 'style') === 'style')
+        .map((option) => {
+          const current = optionValue(option, project.content);
+          return (
+            <div className="field" key={option.key}>
+              <span className="label">{option.label}</span>
+              <div className="choices">
+                {option.options.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    className="choice"
+                    aria-pressed={current === o.id}
+                    onClick={() => update({ content: { [option.key]: o.id } })}
+                  >
+                    {o.label}
+                    <small>{o.description}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
       <ColorRow
         label="Couleur d'accent"

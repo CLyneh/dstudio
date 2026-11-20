@@ -27,7 +27,14 @@ export function previewSize(id: FormatId, maxSide = 960): { width: number; heigh
   return { width: Math.round(f.width * scale), height: Math.round(f.height * scale) };
 }
 
-/** Pixel factor: designs are drawn for a frame whose short side is 1080 px (1920×1080, 1080×1920). */
+/** Extra size for tall frames, seen on a phone: ×1.4 in 9:16, ×1.13 in 4:5, none in 1:1 or landscape. */
+export const VERTICAL_BOOST = 0.4;
+
+/**
+ * Pixel factor: designs are drawn for a frame whose short side is 1080 px (1920×1080, 1080×1920),
+ * then enlarged in tall frames so titles and cards use the height of a phone screen.
+ */
 export function designScale(width: number, height: number): number {
-  return Math.min(width, height) / 1080;
+  const tall = Math.min(1, Math.max(0, (height / width - 1) / (16 / 9 - 1)));
+  return (Math.min(width, height) / 1080) * (1 + VERTICAL_BOOST * tall);
 }

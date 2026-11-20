@@ -10,6 +10,8 @@ export interface TemplateField {
   placeholder?: string;
   /** Multi-line text (card body). */
   multiline?: boolean;
+  /** Checkbox label: the field can be switched off (stored as `<key>Off` = '1' in the content). */
+  optional?: string;
 }
 
 /** Multi-item templates take one item per line in `content.list`. */
@@ -26,6 +28,18 @@ export interface Choice {
   id: string;
   label: string;
   description: string;
+}
+
+/** Extra visual choice stored in the content under `key` (e.g. the card back design). */
+export interface TemplateOption {
+  key: string;
+  label: string;
+  /** The first one is the default. */
+  options: Choice[];
+  /** Editor step that shows it (default: Style). */
+  step?: 'style' | 'animation';
+  /** Only shown when this returns true (e.g. depends on another option). */
+  showIf?: (content: Record<string, string>) => boolean;
 }
 
 /** Ready-made text content the user can apply in one click. */
@@ -47,10 +61,14 @@ export interface TemplateDefinition {
   /** Seconds; per item for list templates. */
   defaultDuration: number;
   supportsPosition: boolean;
+  /** Title of the animation list in the editor (default: « Animation »). */
+  animationLabel?: string;
   /** Animations specific to this template; the first is the default. */
   animations: Choice[];
   /** Visual variants (card style, card finish…); the first is the default. */
   variants?: { label: string; options: Choice[] };
+  /** Other visual choices shown in the Style step. */
+  options?: TemplateOption[];
   /** Entrance end and exit start (seconds) for the timeline colors. */
   phases(duration: number): { inEnd: number; outStart: number };
   /** One entry per output clip. Single templates return [content]. */
